@@ -1,0 +1,2761 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>遺跡探險隊</title>
+<!-- 調色盤：每個單元自己的顏色，放在引擎樣式前面 -->
+<style>
+:root{
+  --brand:#1e2a38; --brand2:#2c3e50; --brandink:#2c3e50;
+  --steel:#1e2a38; --steel2:#2c3e50; --amber:#ffb020; --amber2:#e07b00;
+  --ink:#16232e; --ok:#2fa46b; --no:#e0603c; --card:#fdf8ef; --line:#dfcfae;
+  --pipe:#6b7f92;
+  --bg:linear-gradient(180deg,#33506b,#1e2a38 55%,#131c26);
+}
+body{background:var(--bg)}
+</style>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+/* 調色盤由單元包提供（:root） */
+body{
+  font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  background:linear-gradient(180deg,#33506b,#1e2a38 55%,#131c26);
+  color:var(--ink);min-height:100vh;padding:16px;overflow-x:hidden;
+}
+.wrap{max-width:960px;margin:0 auto;position:relative;z-index:1}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60}
+.topbar{display:flex;align-items:center;gap:10px;color:#fff;margin-bottom:14px;flex-wrap:wrap}
+.topbar h1{font-size:20px;letter-spacing:1px}
+.topbar .sub{font-size:13px;opacity:.7}
+.spacer{flex:1}
+.chip{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.24);
+  color:#fff;border-radius:999px;padding:5px 13px;font-size:14px;font-weight:700}
+.chip.warn{background:#c0392b;border-color:#e2725b;animation:pulse .8s infinite}
+.chip.over{background:rgba(255,176,32,.3);border-color:rgba(255,176,32,.55)}
+.chip.btn{cursor:pointer;user-select:none}
+@keyframes pulse{50%{opacity:.5}}
+.panel{background:var(--card);border-radius:20px;padding:22px;
+  box-shadow:0 16px 44px rgba(0,0,0,.42);border:3px solid var(--line);position:relative}
+.shake{animation:shk .38s}
+@keyframes shk{20%{transform:translateX(-9px)}40%{transform:translateX(9px)}
+  60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.flashno::after,.flashok::after{content:"";position:absolute;inset:0;border-radius:18px;
+  pointer-events:none;animation:fl .45s ease-out}
+.flashno::after{background:rgba(224,96,60,.30)}
+.flashok::after{background:rgba(47,164,107,.26)}
+@keyframes fl{to{opacity:0}}
+
+/* 選夥伴 */
+.pick-head{text-align:center;margin-bottom:16px}
+.pick-head .emoji{font-size:46px}
+.pick-head h2{font-size:26px;margin:6px 0}
+.pick-head p{font-size:15px;color:#4a5d68;line-height:1.7}
+.namebar{max-width:430px;margin:0 auto 18px;text-align:center}
+.namebar label{display:block;font-size:14px;font-weight:800;color:#8b7a55;margin-bottom:6px}
+.namebar input{width:100%;padding:13px 16px;border:3px solid var(--line);border-radius:14px;
+  font-size:19px;font-weight:800;text-align:center;font-family:inherit;color:var(--steel2);
+  background:#fff;outline:none}
+.namebar input:focus{border-color:var(--amber)}
+.pets{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px}
+.pet{border:3px solid var(--line);border-radius:18px;padding:14px 8px;text-align:center;
+  cursor:pointer;transition:.15s;background:#fff}
+.pet:hover{transform:translateY(-5px) scale(1.03);border-color:var(--amber)}
+.pet.on{border-color:var(--amber);background:#fff3d9;box-shadow:0 0 0 4px rgba(255,176,32,.32)}
+.pet .face{font-size:46px;line-height:1.25;display:block}
+.pet .nm{font-size:15px;font-weight:800;margin-top:4px;color:var(--steel2)}
+.pet-mini{display:inline-flex;align-items:center;gap:5px}
+.pet-mini .face{font-size:19px}
+
+/* 工廠地圖 */
+.fac-head{text-align:center;margin-bottom:6px}
+.fac-head .emoji{font-size:50px;line-height:1.2}
+.fac-head h2{font-size:26px;margin:4px 0 6px}
+.fac-head p{font-size:15px;color:#4a5d68;line-height:1.7}
+.goal{background:#fff3d9;border:2px dashed var(--amber);border-radius:14px;
+  padding:12px 16px;margin:14px 0 18px;font-size:15px;line-height:1.7}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.lv{background:#fff;border:3px solid var(--line);border-radius:16px;padding:16px;
+  cursor:pointer;transition:.15s;position:relative}
+.lv:hover{transform:translateY(-4px);border-color:var(--amber);box-shadow:0 8px 22px rgba(0,0,0,.16)}
+.lv.locked{opacity:.45;cursor:not-allowed;filter:grayscale(.7)}
+.lv.locked:hover{transform:none;border-color:var(--line);box-shadow:none}
+.lv .tier{display:inline-block;font-size:12px;font-weight:800;color:#fff;
+  background:var(--steel2);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.lv h3{font-size:19px;margin-bottom:6px}
+.lv .desc{font-size:13.5px;color:#5b6b75;line-height:1.6;min-height:44px}
+.lv .meta{margin-top:10px;font-size:12.5px;color:#8b7a55;font-weight:700}
+.lv .done{margin-top:8px;font-size:12.5px;font-weight:800;color:#14683f;
+  background:#e6f7ee;border-radius:8px;padding:4px 8px;display:inline-block}
+.lv .stars{position:absolute;top:12px;right:14px;font-size:15px;letter-spacing:1px}
+.bonus{margin-top:16px;background:#eef7ff;border:2px solid #a9d3ef;border-radius:14px;
+  padding:12px 16px;font-size:14px;line-height:1.7}
+.progline{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 16px;
+  font-size:14.5px;color:#5b6b75;margin-top:12px;display:inline-block}
+.progline b{color:var(--amber2);font-size:16px}
+
+/* 題目框架 */
+.qhead{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.qhead .lvname{font-weight:800;color:var(--steel2)}
+.qhead .cnt{font-size:14px;color:#7b8b95}
+.bar{height:10px;background:#e8ddc4;border-radius:99px;overflow:hidden;margin:8px 0 14px}
+.bar > i{display:block;height:100%;border-radius:99px;transition:.35s;
+  background:linear-gradient(90deg,var(--amber),var(--amber2));
+  box-shadow:0 0 12px rgba(255,176,32,.9)}
+.qtext{font-size:clamp(20px,4.2vw,29px);font-weight:800;text-align:center;
+  line-height:1.5;margin:6px 0 4px}
+.qsub{text-align:center;color:#7b8b95;font-size:14.5px;margin-bottom:14px}
+.stage{background:#f7f1e2;border:2px solid var(--line);border-radius:16px;
+  padding:16px;margin-bottom:16px;position:relative;overflow:hidden}
+.buddy{font-size:32px;text-align:center;line-height:1.1}
+.buddy.happy{animation:hop .5s ease-out 2}
+.buddy.sad{animation:shk2 .4s}
+@keyframes hop{50%{transform:translateY(-14px) scale(1.14)}}
+@keyframes shk2{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.combo{position:absolute;top:8px;right:12px;font-size:22px;font-weight:900;
+  color:var(--amber2);text-shadow:0 2px 0 #fff;animation:pop2 .35s ease-out}
+@keyframes pop2{from{transform:scale(.4) rotate(-12deg);opacity:0}}
+
+/* L1 積木分類 */
+.yard{position:relative;min-height:150px;background:#fffdf7;border:2px dashed var(--line);
+  border-radius:12px;margin-bottom:12px;overflow:hidden}
+.yard .tip{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#b3a headline;color:#b8a887;font-size:15px;font-weight:700}
+.blk{position:absolute;border-radius:7px;font-weight:900;display:flex;
+  align-items:center;justify-content:center;cursor:grab;user-select:none;touch-action:none;
+  box-shadow:0 3px 0 rgba(0,0,0,.28);transition:transform .12s}
+.blk:active{cursor:grabbing;transform:scale(1.12)}
+#supply .blk{position:relative;left:auto;top:auto}
+.blk.sel{outline:4px solid var(--amber);outline-offset:2px;transform:scale(1.12)}
+.blk.k1000{width:74px;height:40px;font-size:15px;background:linear-gradient(160deg,#ffe08a,#f0a800);color:#5a3c00}
+.blk.k100{width:58px;height:36px;font-size:14px;background:linear-gradient(160deg,#b8e6ff,#3aa6e0);color:#093246}
+.blk.k10{width:44px;height:32px;font-size:13px;background:linear-gradient(160deg,#c9f3c0,#4caf50);color:#0d3d14}
+.blk.k1{width:32px;height:30px;font-size:13px;background:linear-gradient(160deg,#ffd0d0,#e0603c);color:#5a1408}
+.blk.fly{transition:all .32s cubic-bezier(.4,1.4,.6,1);z-index:5}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.slot2{background:#fff;border:3px solid var(--steel2);border-radius:12px;padding:9px 6px;
+  text-align:center;transition:.12s;min-height:96px;cursor:pointer}
+.slot2.hot{border-color:var(--amber);background:#fff3d9;transform:scale(1.05)}
+.slot2 .lb{font-size:14px;font-weight:800;color:#8b7a55}
+.slot2 .cn{font-size:30px;font-weight:900;color:var(--steel2);line-height:1.25;
+  font-variant-numeric:tabular-nums}
+.slot2 .un{font-size:12px;color:#9aa7b0}
+.slot2 .mini{font-size:11px;color:#b8a887;margin-top:2px}
+.bignum{font-size:clamp(34px,8vw,54px);font-weight:900;color:var(--steel2);
+  letter-spacing:4px;text-align:center;font-variant-numeric:tabular-nums;margin-top:10px}
+.bignum.pulse{animation:pop2 .3s ease-out}
+
+.supply{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:8px;
+  background:#fffdf7;border:2px dashed var(--line);border-radius:12px;padding:12px 8px}
+.sup{display:flex;flex-direction:column;align-items:center;gap:5px}
+.blk.ghost{opacity:.85;transform:scale(1.1)}
+.supl{font-size:12px;color:#b8a887;font-weight:700}
+.slot2.drop{min-height:118px}
+.mstack{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:22px;
+  align-items:center;margin:3px 0}
+.mb{width:13px;height:9px;border-radius:2px;display:inline-block;animation:drop2 .2s ease-out}
+.mb.k1000{background:#f0a800}.mb.k100{background:#3aa6e0}
+.mb.k10{background:#4caf50}.mb.k1{background:#e0603c}
+.more{font-size:11px;color:#9aa7b0;font-weight:800}
+@keyframes drop2{from{transform:translateY(-10px);opacity:0}}
+
+/* L2 位值疊卡 */
+.rack{display:grid;gap:9px;margin-bottom:14px}
+.rrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+.rrow .rl{width:44px;font-size:14px;font-weight:800;color:#8b7a55;text-align:right}
+.vcard{border:3px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;
+  font-size:17px;font-weight:900;color:var(--steel2);cursor:pointer;transition:.12s;
+  font-variant-numeric:tabular-nums}
+.vcard:hover{transform:translateY(-3px)}
+.vcard.on{border-color:var(--amber);background:#ffb020;color:#3a2500;
+  box-shadow:0 0 14px rgba(255,176,32,.75)}
+.vcard.zero{border-style:dashed;color:#9aa7b0}
+.stackbox{background:#fff;border:3px solid var(--steel2);border-radius:14px;padding:14px 10px;
+  text-align:center;position:relative;min-height:112px}
+.stackbox .lbl{font-size:13px;color:#8b7a55;font-weight:800}
+.expand{font-size:16px;font-weight:800;color:#7b8b95;margin-top:6px;
+  font-variant-numeric:tabular-nums;min-height:22px}
+.stacked{font-size:clamp(32px,7.5vw,48px);font-weight:900;color:var(--amber2);
+  letter-spacing:3px;font-variant-numeric:tabular-nums}
+.stacked.snap{animation:snapin .28s cubic-bezier(.3,1.6,.6,1)}
+@keyframes snapin{from{transform:scale(1.3);filter:blur(2px)}}
+
+/* L3 插卡 */
+.qcard{background:#fff;border:3px solid var(--line);border-radius:14px;padding:16px;
+  font-size:clamp(17px,3.6vw,22px);font-weight:800;line-height:2.1;text-align:center;
+  margin-bottom:14px;color:var(--ink)}
+.hole{display:inline-block;min-width:92px;border-bottom:4px solid var(--steel2);
+  margin:0 5px;padding:2px 8px;color:var(--amber2);cursor:pointer;
+  font-variant-numeric:tabular-nums;transition:.12s}
+.hole.on{background:#fff3d9;border-color:var(--amber);border-radius:8px 8px 0 0}
+.hole.blank{color:#c9bda0}
+.hole.good{color:var(--ok)}
+.hole.bad{color:var(--no);animation:shk2 .35s}
+.tray{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.tcard{border:3px solid var(--line);background:#fff;border-radius:11px;padding:11px 16px;
+  font-size:18px;font-weight:900;color:var(--steel2);cursor:pointer;transition:.12s;
+  font-variant-numeric:tabular-nums}
+.tcard:hover{transform:translateY(-3px);border-color:var(--amber)}
+.tcard:active{transform:scale(.94)}
+.tcard.used{opacity:.35;pointer-events:none}
+
+/* L4 換鈔機 */
+.vault{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}
+.bay{background:#fff;border:3px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.bay .nm{font-size:14px;font-weight:800;color:#8b7a55}
+.bay .stackv{min-height:62px;display:flex;flex-direction:column-reverse;align-items:center;
+  gap:2px;justify-content:flex-start;padding:5px 0}
+.note{width:100%;max-width:74px;height:11px;border-radius:3px;box-shadow:0 1px 0 rgba(0,0,0,.25);
+  animation:drop2 .22s ease-out}
+@keyframes drop2{from{transform:translateY(-12px) scaleX(.6);opacity:0}}
+.note.k1000{background:linear-gradient(90deg,#ffd24a,#e07b00)}
+.note.k100{background:linear-gradient(90deg,#8fd4f7,#2b8fc7)}
+.note.k10{background:linear-gradient(90deg,#a9e6a0,#3f9b45)}
+.note.k1{background:linear-gradient(90deg,#f5b3a4,#c94f2c)}
+.bay .cnt2{font-size:26px;font-weight:900;color:var(--steel2);font-variant-numeric:tabular-nums}
+.bay .ops{display:flex;gap:5px;margin-top:6px}
+.bay .ops button{flex:1;border:none;border-radius:8px;padding:9px 0;font-size:13px;
+  font-weight:800;font-family:inherit;cursor:pointer;background:#e3ecf2;color:var(--steel2)}
+.bay .ops button:disabled{opacity:.3;cursor:not-allowed}
+.bay .ops .brk{background:#ffe6c2;color:#8a4b00}
+.bay .ops .mrg{background:#d9f0e2;color:#136b43}
+.bay.flash{animation:bayflash .5s}
+@keyframes bayflash{0%,100%{background:#fff}35%{background:#fff3d9}}
+.payzone{background:#fff;border:3px dashed var(--ok);border-radius:14px;padding:12px;
+  text-align:center;margin-top:10px}
+.payzone .amt{font-size:30px;font-weight:900;color:var(--ok);font-variant-numeric:tabular-nums}
+.opnote{text-align:center;font-size:14.5px;color:#7b8b95;margin-top:10px;line-height:1.7}
+.goalbox{background:#eef4ff;border:2px solid #7ba7e0;color:#1c4380;border-radius:12px;
+  padding:10px 14px;font-size:14.5px;line-height:1.7;margin-bottom:12px;text-align:center}
+
+.modal{position:fixed;inset:0;background:rgba(18,28,38,.6);z-index:80;
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.mbox{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:22px;
+  max-width:470px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:pop3 .18s ease-out}
+.mbox h3{font-size:21px;text-align:center;margin-bottom:4px}
+.mbox .msub{text-align:center;font-size:14px;color:#7b8b95;margin-bottom:14px}
+.mtxt{font-size:15.5px;line-height:1.8;color:#5b6b75;text-align:center;margin-bottom:6px}
+.mbox .ptrow:last-child{border-bottom:none}
+.estbig{text-align:center;font-size:34px;font-weight:900;color:var(--amber2);margin:12px 0 2px}
+.estsub{text-align:center;font-size:13.5px;color:#8b7a55;margin-bottom:6px}
+
+.predict{background:#eef4ff;border:2px solid #7ba7e0;border-radius:14px;padding:13px 15px;margin-bottom:12px}
+.predict.locked{opacity:.5;pointer-events:none}
+.phead{font-size:14.5px;color:#1c4380;margin-bottom:10px;text-align:center}
+.pq{margin-bottom:10px}
+.pq:last-child{margin-bottom:0}
+.pql{font-size:16px;font-weight:800;color:#16232e;margin-bottom:7px;text-align:center}
+.popts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.popt{border:3px solid #b9d3ee;background:#fff;border-radius:12px;padding:11px 20px;
+  font-size:19px;font-weight:900;color:var(--steel2);cursor:pointer;font-family:inherit;
+  font-variant-numeric:tabular-nums;transition:.12s}
+.popt:hover{transform:translateY(-3px);border-color:var(--amber)}
+.popt:active{transform:scale(.94)}
+.popt.on{border-color:var(--amber);background:var(--amber);color:#472e00;
+  box-shadow:0 0 14px rgba(255,176,32,.7)}
+.vault.locked{opacity:.42;pointer-events:none;filter:grayscale(.55)}
+.lockbar{text-align:center;font-size:14.5px;color:#7b8b95;margin-top:10px;
+  background:#f1f0ea;border:2px dashed #ddd6c2;border-radius:10px;padding:9px 12px}
+
+.chip.hit{background:#c0392b;border-color:#e2725b;animation:hitsh .55s}
+@keyframes hitsh{20%{transform:translateX(-5px) scale(1.1)}60%{transform:translateX(5px) scale(1.1)}}
+.floatpen{position:fixed;font-size:26px;font-weight:900;color:#ff7a5c;z-index:90;
+  pointer-events:none;text-shadow:0 2px 6px rgba(0,0,0,.45);animation:floatup 1s ease-out forwards}
+@keyframes floatup{to{transform:translateY(-46px);opacity:0}}
+.stage.frozen{pointer-events:none;opacity:.5;filter:grayscale(.45)}
+.penline{background:#c0392b;color:#fff;border-radius:10px;padding:8px 12px;margin-bottom:9px;
+  font-size:15.5px;text-align:center;animation:pop3 .2s ease-out}
+.freezebar{margin-top:10px;text-align:center;font-size:15.5px;font-weight:800;color:#8f3418;
+  background:#fff;border:2px dashed #e0603c;border-radius:10px;padding:8px 12px}
+.freezebar.done{color:#14683f;border-color:var(--ok);border-style:solid}
+
+.chip.done{background:#2fa46b;border-color:#7fd6a8}
+.warnbox{background:#fdeee9;border:2px solid var(--no);color:#8f3418;border-radius:12px;
+  padding:12px 15px;font-size:15px;line-height:1.75;margin-bottom:14px;text-align:center}
+.finalbar{background:#e6f7ee;border:2px solid var(--ok);color:#14683f;border-radius:14px;
+  padding:14px 18px;margin-top:16px;font-size:15.5px;line-height:1.8;text-align:center}
+.btn.stop{background:#c0392b;color:#fff}
+.alertbar{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:95;
+  background:#c0392b;color:#fff;font-size:15px;font-weight:800;padding:11px 20px;
+  border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.4);animation:pop3 .2s ease-out}
+
+/* 回饋 */
+.fb{border-radius:14px;padding:14px 18px;margin-bottom:14px;font-size:16px;line-height:1.75;
+  animation:pop3 .2s ease-out}
+@keyframes pop3{from{transform:scale(.96);opacity:0}}
+.fb.ok{background:#e6f7ee;border:2px solid var(--ok);color:#14683f}
+.fb.no{background:#fdeee9;border:2px solid var(--no);color:#8f3418}
+.code{display:inline-block;font-size:12px;font-weight:800;background:rgba(0,0,0,.08);
+  border-radius:5px;padding:1px 7px;margin-left:6px;vertical-align:2px}
+.fb .ans{margin-top:6px;font-weight:800}
+.hintbox{background:#fff8e3;border-left:5px solid var(--amber);border-radius:8px;
+  padding:11px 15px;font-size:14.5px;line-height:1.7;margin-bottom:14px;color:#6b5720}
+
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{border:none;border-radius:12px;padding:14px 30px;font-size:17px;font-weight:800;
+  cursor:pointer;font-family:inherit;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.btn.main{background:var(--amber);color:#472e00}
+.btn.go{background:var(--ok);color:#fff}
+.btn.ghost{background:#e6ebee;color:#456}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* 結算 / 排行榜 / 匯出 */
+.rhead{text-align:center;margin-bottom:16px}
+.rhead .emoji{font-size:54px}
+.rhead h2{font-size:26px;margin:6px 0}
+.rstats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.stat{background:#f7f1e2;border:2px solid var(--line);border-radius:14px;
+  padding:12px 20px;text-align:center;min-width:104px}
+.stat b{display:block;font-size:28px;color:var(--steel2);font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:#7b8b95}
+.stat.pt{background:#fff3d9;border-color:var(--amber)}
+.stat.pt b{color:var(--amber2)}
+.ptbox{background:#fff3d9;border:2px solid var(--amber);border-radius:14px;padding:14px 18px;margin-bottom:14px}
+.ptbox h4{font-size:16px;margin-bottom:8px;color:#7a5400}
+.ptrow{display:flex;justify-content:space-between;gap:12px;font-size:14.5px;
+  padding:6px 0;border-bottom:1px dashed #e6cf95;color:#6b5720}
+.ptrow:last-child{border:none;font-weight:900;color:#7a5400;font-size:16.5px;padding-top:9px}
+.remember{background:#fff3f0;border:2px solid #f3b6a3;border-radius:14px;padding:14px 18px}
+.remember h4{color:#8f3418;margin-bottom:8px;font-size:16px}
+.remember li{margin:7px 0 7px 20px;font-size:14.8px;line-height:1.7;color:#6d3a26}
+.allgood{background:#e6f7ee;border:2px solid var(--ok);border-radius:14px;
+  padding:14px 18px;color:#14683f;font-size:15px;line-height:1.7}
+.tablewrap{overflow-x:auto}
+.sheet{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+.sheet th{background:var(--steel2);color:#fff;padding:10px 8px;font-size:14px;white-space:nowrap}
+.sheet td{padding:11px 8px;text-align:center;border-bottom:1px solid var(--line);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.sheet td.nm{text-align:left;font-weight:800;color:var(--steel2)}
+.sheet tr:nth-child(even) td{background:#f7f1e2}
+.sheet .pts{font-weight:900;color:var(--amber2)}
+.sheet .miss{color:#c7bda4}
+.sheet td.rk{font-size:19px;font-weight:900;color:var(--amber2);width:64px}
+.sheet tr.me td{background:#fff3d9 !important;box-shadow:inset 0 0 0 2px var(--amber)}
+.youtag{font-size:12px;font-weight:800;background:var(--amber);color:#472e00;
+  border-radius:6px;padding:1px 7px;margin-left:4px}
+.mode{border-radius:12px;padding:11px 16px;font-size:14.5px;line-height:1.7;margin-bottom:14px;
+  background:#f1f0ea;border:2px solid #ddd6c2;color:#5b6b75}
+.mode.on{background:#e6f7ee;border-color:var(--ok);color:#14683f}
+.codebar{display:flex;gap:8px;flex-wrap:wrap}
+.codebar input{flex:1;min-width:210px;padding:11px 14px;border:2px solid var(--line);
+  border-radius:11px;font-size:14px;font-family:inherit;background:#fff;outline:none;color:#5b6b75}
+.grand{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+.rank{text-align:center;background:linear-gradient(160deg,#fff3d9,#ffe3ac);
+  border:3px solid var(--amber);border-radius:18px;padding:18px;margin-bottom:14px}
+.rank .big{font-size:42px;font-weight:900;color:var(--amber2);line-height:1.2}
+.rank .ttl{font-size:20px;font-weight:900;color:#7a5400;margin-top:4px}
+.rank .sub{font-size:14px;color:#8b7a55;margin-top:6px;line-height:1.7}
+.segbar{display:flex;gap:10px;justify-content:center;margin:16px 0 18px;flex-wrap:wrap}
+.seg{border:3px solid var(--line);background:#fff;border-radius:12px;padding:11px 22px;
+  font-size:15.5px;font-weight:800;font-family:inherit;color:#7b8b95;cursor:pointer}
+.seg.on{border-color:var(--amber);background:#fff3d9;color:#7a5400}
+.printhead{display:none;text-align:center;margin-bottom:14px}
+.printhead h2{font-size:21px;margin-bottom:4px}
+.printhead .sub{font-size:13px;color:#666}
+.statline{margin-top:14px;font-size:14.5px;color:#5b6b75;text-align:center;line-height:1.9}
+.statline b{color:var(--steel2);font-size:17px}
+.signline{display:none;margin-top:26px;font-size:14px;color:#333;text-align:right}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+}
+@media print{
+  @page{ margin:12mm; }
+  body{background:#fff;padding:0;color:#000}
+  .topbar,.actions,.noprint,.mode,.ptbox,.bonus,.rhead,#fx{display:none !important}
+  .panel{box-shadow:none;border:none;padding:0;background:#fff}
+  .printhead,.signline{display:block}
+  .tablewrap{overflow:visible}
+  .sheet{font-size:12.5px}
+  .sheet th{background:#e8e8e8 !important;color:#000 !important;border:1px solid #999;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet td{border:1px solid #bbb;padding:6px 5px}
+  .sheet tr:nth-child(even) td{background:#f6f6f6 !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet tr.me td{background:#fff !important;box-shadow:none}
+  .sheet .pts,.sheet td.rk{color:#000 !important}
+  .statline{color:#000;border-top:1px solid #999;padding-top:8px}
+  tr{page-break-inside:avoid}
+  thead{display:table-header-group}
+}
+
+
+/* ===== L1 搶貨對決（duel） ===== */
+.duelbar{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;
+  font-size:15.5px;font-weight:800;color:var(--steel2)}
+.duelbar .dside{background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 16px}
+.duelbar .dside b{font-size:20px;color:var(--amber2)}
+.duelbar .dvs{font-size:15px;color:#9aa7b0;font-weight:900}
+.duel{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.dcard{background:#fff;border:3px solid var(--line);border-radius:16px;padding:14px 10px;
+  text-align:center;cursor:pointer;transition:.14s}
+.dcard:hover{border-color:var(--amber);transform:translateY(-3px)}
+.dcard.done{cursor:default;transform:none}
+.dcard.win{border-color:var(--ok);background:#e9f9f0;box-shadow:0 0 0 4px rgba(47,164,107,.25)}
+.dcard.lose{border-color:var(--no);background:#fdeee9;box-shadow:0 0 0 4px rgba(224,96,60,.22)}
+.dlab{font-size:14px;font-weight:800;color:#8b7a55;margin-bottom:8px}
+.dslots{display:flex;gap:5px;justify-content:center}
+.dslot{width:44px;height:58px;border-radius:10px;background:linear-gradient(160deg,#5b7186,#3a4c5e);
+  color:#fff;font-size:26px;font-weight:900;display:flex;align-items:center;justify-content:center;
+  font-variant-numeric:tabular-nums;transition:.2s}
+.dslot.open{background:#fff;color:var(--steel2);border:3px solid var(--line);
+  animation:dflip .26s ease-out}
+.dslot.open.none{background:transparent;border:3px dashed #cfc3a8;color:transparent;
+  position:relative}
+.dslot.open.none::after{content:'沒有';position:absolute;left:0;right:0;top:50%;
+  transform:translateY(-50%);font-size:11px;font-weight:800;color:#b8a887;letter-spacing:1px}
+.dslot.open.key{border-color:var(--amber);background:#fff3d9;color:var(--amber2);
+  box-shadow:0 0 12px rgba(255,176,32,.6)}
+@keyframes dflip{from{transform:rotateY(90deg) scale(.8);opacity:.2}}
+.dpick{margin-top:9px;font-size:13px;font-weight:800;color:#9aa7b0}
+.dcard:hover .dpick{color:var(--amber2)}
+.dmid{text-align:center}
+.dcmp{font-size:34px;font-weight:900;color:#c9bda0;min-width:46px}
+.dcmp.on{color:var(--amber2);animation:pop3 .25s ease-out}
+.dcmp.same{font-size:20px;color:#9aa7b0}
+.dctl{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px}
+.dreward{font-size:14.5px;color:#6b5720;background:#fff3d9;border:2px solid var(--amber);
+  border-radius:10px;padding:6px 14px}
+.dreward b{font-size:16px;color:var(--amber2)}
+.dnote{text-align:center;font-size:13.5px;color:#9aa7b0;margin-top:10px;line-height:1.7}
+@media (max-width:560px){
+  .dslot{width:36px;height:48px;font-size:21px}
+  .duel{grid-template-columns:1fr auto 1fr;gap:5px}
+}
+
+
+/* ===== 名次播報 ===== */
+.ticker{border-radius:12px;padding:11px 16px;margin-bottom:12px;font-size:16px;font-weight:800;
+  text-align:center;background:#eef4ff;border:2px solid #7ba7e0;color:#1c4380;
+  animation:tickin .32s cubic-bezier(.3,1.5,.6,1)}
+.ticker.up{background:#e6f7ee;border-color:var(--ok);color:#14683f}
+.ticker.down{background:#fdeee9;border-color:var(--no);color:#8f3418}
+@keyframes tickin{from{transform:translateY(-12px) scale(.94);opacity:0}}
+.mv{display:inline-block;font-size:12px;font-weight:900;margin-left:5px;vertical-align:3px;
+  border-radius:6px;padding:1px 5px}
+.mv.up{background:#e6f7ee;color:#14683f}
+.mv.down{background:#fdeee9;color:#b6412a}
+.sheet tr.rowup td{animation:rowup .9s ease-out}
+.sheet tr.rowdown td{animation:rowdown .9s ease-out}
+@keyframes rowup{0%{background:#c9f3dc}100%{}}
+@keyframes rowdown{0%{background:#ffd9cd}100%{}}
+.chase{background:#fff3d9;border:2px solid var(--amber);border-radius:12px;
+  padding:11px 16px;margin-bottom:12px;font-size:15.5px;text-align:center;color:#6b5720}
+.chase b{font-size:19px;color:var(--amber2)}
+.chase.lead{background:#e6f7ee;border-color:var(--ok);color:#14683f}
+.chase.lead b{color:#14683f}
+
+.dcmp.ready{font-size:15px;color:var(--amber2);line-height:1.25;animation:pop3 .25s ease-out}
+.dcmp .cantell{display:inline-block;font-weight:900}
+.dreward.warn{background:#fdeee9;border-color:var(--no);color:#8f3418}
+.dreward.warn b{color:#b6412a}
+
+
+/* ===== L2 裝箱湊單 ===== */
+.order{background:#fff3d9;border:2px solid var(--amber);border-radius:12px;padding:11px 16px;
+  text-align:center;font-size:16.5px;margin-bottom:12px;color:#6b5720}
+.order b{font-size:22px;color:var(--amber2)}
+.ordersub{font-size:14px;color:#8b7a55}
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin-bottom:12px}
+.goods{border:3px solid var(--line);background:#fff;border-radius:14px;padding:11px 6px;
+  font-family:inherit;font-size:15px;cursor:pointer;color:var(--steel2);transition:.13s}
+.goods .gicon{display:block;font-size:24px}
+.goods b{font-size:19px;font-variant-numeric:tabular-nums}
+.goods:hover{transform:translateY(-3px);border-color:var(--amber)}
+.goods.on{border-color:var(--ok);background:#e9f9f0;box-shadow:0 0 0 3px rgba(47,164,107,.25)}
+.boxrow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.bcell{background:#fff;border:3px solid var(--line);border-radius:14px;padding:9px 6px;text-align:center}
+.bcell.full{border-color:var(--no);background:#fdeee9;animation:pulse .9s infinite}
+.blab{font-size:13.5px;font-weight:800;color:#8b7a55}
+.bstack{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:24px;align-items:center;margin:4px 0}
+.bcnt{font-size:24px;font-weight:900;color:var(--steel2);font-variant-numeric:tabular-nums}
+.packbtn{margin-top:5px;width:100%;border:none;border-radius:8px;padding:7px 0;font-size:13px;
+  font-weight:800;font-family:inherit;cursor:pointer;background:var(--ok);color:#fff}
+.boxsum{text-align:center;font-size:17px;font-weight:800;color:var(--steel2);margin-top:12px}
+.boxsum b{font-size:26px;color:var(--amber2);font-variant-numeric:tabular-nums}
+
+/* ===== L3 收銀找零（直式借位） ===== */
+.colwrap{display:flex;justify-content:center;margin:6px 0 14px}
+.colsum{border-collapse:collapse;font-variant-numeric:tabular-nums}
+.colsum td{width:52px;height:46px;text-align:center;font-size:30px;font-weight:900;color:var(--steel2)}
+.colsum .markrow td{height:24px;font-size:17px;color:var(--no)}
+.bmark{color:var(--no);font-weight:900}
+.colsum .toprow td.struck{position:relative;color:#b8b0a0}
+.colsum .toprow td.struck::after{content:'';position:absolute;left:12%;right:12%;top:52%;
+  height:3px;background:var(--no);transform:rotate(-14deg)}
+.colsum td.cur{background:#fff3d9;border-radius:8px;box-shadow:0 0 0 3px var(--amber) inset}
+.colsum .botrow td{border-bottom:4px solid var(--steel2)}
+.colsum td.sign{font-size:26px;color:var(--steel2)}
+.colsum .resrow td.got{color:var(--ok);animation:pop3 .25s ease-out}
+.stepq{text-align:center;font-size:17px;font-weight:800;margin-bottom:10px;color:var(--ink)}
+.stepnum{color:var(--amber2);font-size:21px;font-variant-numeric:tabular-nums;margin:0 4px}
+.stepbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.stepdone{text-align:center;font-size:18px;font-weight:800;color:#14683f;
+  background:#e6f7ee;border:2px solid var(--ok);border-radius:12px;padding:12px}
+.stepdone b{font-size:26px}
+
+/* ===== L4 一日營業 ===== */
+.wallet{text-align:center;font-size:16px;font-weight:800;color:#6b5720;background:#fff3d9;
+  border:2px solid var(--amber);border-radius:999px;padding:8px 18px;display:block;margin:0 auto 12px;
+  max-width:260px}
+.wallet b{font-size:23px;color:var(--amber2);font-variant-numeric:tabular-nums}
+.event{text-align:center;font-size:16px;color:#5b6b75;margin-bottom:12px;line-height:1.7}
+.quotes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quote{border:3px solid var(--line);background:#fff;border-radius:16px;padding:14px 8px;
+  font-family:inherit;cursor:pointer;transition:.13s}
+.quote:hover{transform:translateY(-3px);border-color:var(--amber)}
+.qn{font-size:14.5px;font-weight:800;color:#8b7a55}
+.qp{font-size:28px;font-weight:900;color:var(--steel2);font-variant-numeric:tabular-nums;margin:5px 0}
+.qh{font-size:13px;color:#9aa7b0;font-weight:800}
+.ledger{background:#fff;border:3px solid var(--line);border-radius:14px;padding:16px;text-align:center;
+  margin-bottom:12px}
+.lexpr{font-size:27px;font-weight:900;color:var(--steel2);font-variant-numeric:tabular-nums}
+.lexpr .lshown{color:var(--amber2)}
+.lsub{font-size:14px;color:#9aa7b0;margin-top:6px}
+.placeask{text-align:center;font-size:15.5px;font-weight:800;color:#8f3418;margin:12px 0 8px}
+.placerow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pbtn{border:3px solid var(--line);background:#fff;border-radius:12px;padding:9px 4px;
+  font-family:inherit;cursor:pointer;transition:.13s}
+.pbtn:hover{border-color:var(--amber);transform:translateY(-2px)}
+.pbtn .pl{display:block;font-size:12.5px;color:#8b7a55;font-weight:800}
+.pbtn b{font-size:24px;color:var(--steel2);font-variant-numeric:tabular-nums}
+
+.trybar{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.trynote{font-size:13.5px;color:#9aa7b0}
+
+/* =====================================================================
+   2B 遺跡探險隊
+   ===================================================================== */
+.story{background:#fffdf6;border:2px dashed #cdb88a;border-radius:14px;padding:12px 16px;
+  font-size:18px;line-height:1.75;color:var(--ink);margin-bottom:14px;font-weight:700}
+
+/* ----- L1 天平機關門 ----- */
+.gate{text-align:center;font-size:40px;line-height:1;margin-bottom:4px;transition:.4s}
+.gate.open{transform:scale(1.25);filter:drop-shadow(0 0 12px #ffd76a)}
+.scale{position:relative;padding-top:6px}
+.scale .beam{position:relative;height:10px;border-radius:6px;background:linear-gradient(#8a6a3a,#5d4523);
+  margin:0 8% 0;transform-origin:50% 50%;transition:transform .5s}
+.scale .beam::after{content:'';position:absolute;left:50%;top:10px;width:0;height:0;
+  border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:22px solid #5d4523;
+  transform:translateX(-50%)}
+.scale.wobble .beam{animation:wob 2.4s ease-in-out infinite}
+@keyframes wob{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.scale.open .beam{transform:rotate(0);background:linear-gradient(#ffd76a,#d49a1a)}
+.pans{display:grid;grid-template-columns:1fr 1.6fr;gap:12px;margin-top:30px}
+.pan{border:3px solid #bfa575;background:#fff;border-radius:0 0 26px 26px;padding:10px;
+  min-height:120px;cursor:pointer;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;
+  justify-content:center;transition:.15s}
+.pan:hover{border-color:var(--amber);background:#fffaf0}
+.scale.open .pan{border-color:var(--ok);background:#effaf3;cursor:default}
+.panlab{width:100%;text-align:center;font-size:15px;color:#6b5720;font-weight:800}
+.panlab b{color:var(--amber2);font-size:17px}
+.panlab small{display:block;font-size:12.5px;color:#9aa7b0;font-weight:700}
+.wslot{flex:1 1 110px;max-width:160px;min-height:66px;border:2px dashed #d8c9a5;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;color:#c2b28c;font-size:13px;font-weight:800}
+.weight{flex:1 1 110px;max-width:170px;min-height:66px;border:3px solid #7d6a4a;
+  background:linear-gradient(#f3ecdc,#dccfb2);border-radius:12px 12px 16px 16px;padding:6px 8px;
+  font-family:inherit;cursor:pointer;transition:.13s;color:var(--steel2)}
+.weight:hover{transform:translateY(-3px)}
+.weight .wl{display:block;font-size:13px;font-weight:800;color:#6b5720}
+.weight b{font-size:24px;font-variant-numeric:tabular-nums}
+.weight .wu{font-size:13px;font-weight:800}
+.weight.unknown{border-color:var(--amber2);background:linear-gradient(#fff3d9,#ffd98a)}
+.weight.sel{box-shadow:0 0 0 4px var(--amber);transform:translateY(-4px)}
+.traylab{text-align:center;font-size:15px;font-weight:800;color:#8f3418;margin:14px 0 8px}
+.wtray{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:10px}
+
+/* ----- L2 迷霧射靶 ----- */
+.nline{background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:10px;opacity:.55}
+.nline.active{opacity:1;border-color:var(--amber);box-shadow:0 0 0 3px #ffe3a3}
+.nline.done{opacity:1;border-color:var(--ok)}
+.nlab{text-align:center;font-size:17px;font-weight:800;color:var(--steel2);margin-bottom:6px}
+.nlab b{font-size:22px;color:var(--amber2);font-variant-numeric:tabular-nums}
+.nline.done .nlab b{color:var(--ok)}
+.ntrack{position:relative;height:50px;margin:0 36px 26px;border-bottom:4px solid var(--steel2)}
+.ntick{position:absolute;bottom:-26px;font-size:14px;font-weight:800;color:#5b6b75;transform:translateX(-50%)}
+.ntick.l{left:0}.ntick.r{left:100%}
+.ntrack::before,.ntrack::after{content:'';position:absolute;bottom:-10px;width:4px;height:16px;background:var(--steel2)}
+.ntrack::before{left:-2px}.ntrack::after{right:-2px}
+.nmid{position:absolute;left:50%;bottom:-6px;width:2px;height:10px;background:#9aa7b0}
+.ndot{position:absolute;bottom:10px;transform:translateX(-50%);background:var(--amber);color:#3b2a00;
+  font-weight:900;font-size:14px;border-radius:10px;padding:3px 7px;white-space:nowrap;transition:left .6s}
+.ndot::after{content:'';position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);
+  border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--amber)}
+.ndot.snapL{left:0 !important;background:var(--ok);color:#fff}
+.ndot.snapR{left:100% !important;background:var(--ok);color:#fff}
+.ndot.snapL::after,.ndot.snapR::after{border-top-color:var(--ok)}
+.nends{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
+.nend{border:3px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font-family:inherit;
+  font-size:15px;font-weight:800;color:var(--steel2);cursor:pointer;transition:.13s}
+.nend:hover:not(:disabled){border-color:var(--amber);transform:translateY(-2px)}
+.nend:disabled{opacity:.4;cursor:default}
+.eqn{text-align:center;font-size:26px;font-weight:900;color:var(--steel2);margin:6px 0 10px;font-variant-numeric:tabular-nums}
+.eqn b{color:var(--ok)}
+.range{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-radius:16px;padding:10px;
+  background:linear-gradient(#e8eef2,#d5dee4)}
+.fogcover{position:absolute;inset:0;border-radius:16px;background:rgba(214,222,228,.93);z-index:2;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;
+  font-size:16px;font-weight:800;color:#5b6b75}
+.target{border:3px solid #c9b894;background:#fff;border-radius:50%;aspect-ratio:1;max-width:130px;width:100%;
+  margin:0 auto;font-family:inherit;cursor:pointer;transition:.13s;display:flex;flex-direction:column;
+  align-items:center;justify-content:center}
+.target .ring{font-size:28px;line-height:1}
+.target b{font-size:22px;color:var(--steel2);font-variant-numeric:tabular-nums}
+.target:hover:not(:disabled){transform:scale(1.06);border-color:var(--no)}
+.target:disabled{cursor:default}
+.target.hit{border-color:var(--ok);background:#e6f7ee;box-shadow:0 0 0 5px #bfe8cf}
+
+/* ----- L3 切礦石 ----- */
+.orewrap{margin-bottom:10px}
+.ore{position:relative;display:flex;flex-direction:column;border:3px solid #5a4a3a;border-radius:10px;overflow:hidden;
+  background-color:#9b8a78;
+  background-image:linear-gradient(to right,rgba(40,28,18,.3) 1px,transparent 1px);
+  background-size:calc(100% / var(--n)) 100%}
+.orow{flex:1;border-bottom:2px solid rgba(40,28,18,.5)}
+.ore .orow:last-of-type{border-bottom:0}
+.otick{position:absolute;top:0;bottom:0;width:3px;margin-left:-1px;background:#ffe08a;opacity:.85}
+.orecap{text-align:center;font-size:15px;font-weight:800;color:#5b6b75;margin-top:6px}
+.orecap b{color:var(--amber2);font-size:18px}
+.orepieces{display:flex;gap:18px;align-items:stretch}
+.ore.piece{min-width:0}
+.ore.piece.cur{border-color:var(--amber);box-shadow:0 0 0 4px #ffe3a3}
+.ore.piece.mined{background-color:#6fb88c;border-color:var(--ok)}
+.ore.piece.empty{background:repeating-linear-gradient(45deg,#f1ece2,#f1ece2 6px,#e3dccd 6px,#e3dccd 12px);
+  border-style:dashed;border-color:#b3a58b}
+.plab{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:17px;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.3;padding:2px}
+.ore.piece.empty .plab{color:#7a6d55;text-shadow:none;font-size:13px}
+.askq{text-align:center;font-size:18px;font-weight:800;color:#8f3418;margin:12px 0 8px}
+.askq.done{color:#14683f;background:#e6f7ee;border:2px solid var(--ok);border-radius:12px;padding:10px}
+.askq.done b{font-size:26px}
+.optrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.opt{border:3px solid var(--line);background:#fff;border-radius:12px;padding:10px 16px;font-family:inherit;
+  font-size:19px;font-weight:900;color:var(--steel2);cursor:pointer;transition:.13s;font-variant-numeric:tabular-nums}
+.opt:hover{border-color:var(--amber);transform:translateY(-2px)}
+.opt.cutopt{font-size:16px}
+
+/* ----- L4 密碼石碑 ----- */
+.knockhint{text-align:center;font-size:16px;font-weight:800;color:#5b6b75;margin-bottom:12px;line-height:1.6}
+.knockhint b{color:var(--amber2);font-size:19px}
+.knockhint.win{color:#14683f}
+.stones{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stone{border:3px solid #6f6a60;background:linear-gradient(#cfc9bd,#a39c8e);border-radius:22px 22px 14px 14px;
+  padding:12px 4px;font-family:inherit;cursor:pointer;transition:.13s;display:flex;flex-direction:column;
+  align-items:center;gap:2px;color:#2b2b2b;min-height:112px;justify-content:center}
+button.stone:hover{transform:translateY(-3px) rotate(-2deg);border-color:var(--no)}
+.stone span{font-size:26px;line-height:1}
+.stone b{font-size:24px;font-variant-numeric:tabular-nums}
+.stone small{font-size:12px;color:#7a2e18;font-weight:800}
+.stone.gone{opacity:.45;background:#eee8dc;border-style:dashed;cursor:default}
+.stone.gone s{font-size:20px;color:#8a8070}
+.stone.win{border-color:var(--amber2);background:linear-gradient(#fff3d9,#ffd98a);box-shadow:0 0 0 5px #ffe3a3}
+@media (max-width:560px){
+  .pans{grid-template-columns:1fr}
+  .stones{grid-template-columns:repeat(2,1fr)}
+  .ntrack{margin:0 26px 26px}
+  .story{font-size:16.5px}
+}
+
+/* =====================================================================
+   1-1 萬數寶藏島（由舊版單檔移植，class 加上 k 前綴避免與其他單元衝突）
+   ===================================================================== */
+.kblocks{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;
+  min-height:104px;align-items:center}
+.kempty{color:#b8a887;font-size:15px}
+.kblk{width:74px;height:46px;border-radius:8px;color:#5a3c00;font-weight:900;font-size:17px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#ffdd7a,var(--amber) 55%,var(--amber2));
+  box-shadow:0 4px 0 #a86e00;animation:pop3 .22s ease-out}
+.kcounter{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:14px}
+.krnd{width:56px;height:56px;border-radius:50%;border:none;font-size:28px;font-weight:900;
+  background:var(--steel2);color:#fff;cursor:pointer;box-shadow:0 4px 0 #072f42;font-family:inherit}
+.krnd:active{transform:translateY(3px);box-shadow:0 1px 0 #072f42}
+.krnd:disabled{opacity:.35;cursor:not-allowed}
+.kreadout{font-size:15px;color:#5b6b75;text-align:center;margin-top:12px}
+.kbignum{font-size:clamp(38px,9vw,60px);font-weight:900;color:var(--steel2);
+  letter-spacing:4px;text-align:center;font-variant-numeric:tabular-nums}
+.kboard{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.kcol{width:88px;text-align:center}
+.kcol .klab{font-size:15px;font-weight:800;color:#8b7a55;margin-bottom:6px}
+.kcol .kval{height:76px;border:3px solid var(--steel2);border-radius:12px;background:#fff;
+  font-size:40px;font-weight:900;display:flex;align-items:center;justify-content:center;
+  color:var(--steel2);font-variant-numeric:tabular-nums}
+.kcol .kbtns{display:flex;gap:6px;margin-top:6px}
+.kcol .kbtns button{flex:1;height:34px;border:none;border-radius:8px;background:#dceaf1;
+  font-size:19px;font-weight:900;color:var(--steel2);cursor:pointer;font-family:inherit}
+.kcol .kbtns button:active{background:#c0dceb}
+.kkeypad{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;max-width:460px;margin:0 auto}
+.kkeypad button{height:56px;border-radius:12px;background:#fff;
+  border:2px solid var(--line);font-size:24px;font-weight:800;cursor:pointer;color:var(--ink);
+  font-family:inherit}
+.kkeypad button:active{background:#f0e6cc}
+.kkeypad .kdel{background:#ffe6de;border-color:#f3b6a3;font-size:18px}
+.kslot{background:#fff;border:3px dashed var(--steel2);border-radius:14px;min-height:78px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+  font-size:46px;font-weight:900;letter-spacing:6px;color:var(--steel2);
+  font-variant-numeric:tabular-nums}
+.kslot .kph{font-size:17px;letter-spacing:0;color:#b8a887;font-weight:600}
+.kseq{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+.knode{flex:0 0 auto;width:104px;height:66px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:25px;font-weight:900;background:#fff;
+  border:3px solid var(--line);color:var(--steel2);font-variant-numeric:tabular-nums}
+.knode input{width:100%;height:100%;border:none;background:transparent;text-align:center;
+  font-size:25px;font-weight:900;color:var(--no);font-family:inherit;outline:none}
+.knode.kblank{border-color:var(--no);border-style:dashed}
+.karrow{color:#b8a887;font-size:20px;font-weight:900}
+@media (max-width:560px){
+  .kcol{width:74px}
+  .knode{width:86px;height:58px;font-size:21px}
+  .kkeypad{grid-template-columns:repeat(5,1fr);gap:7px}
+}
+
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <div class="topbar">
+    <h1>🏭 載入中</h1>
+    <span class="sub"></span>
+    <span class="spacer"></span>
+    <span class="chip btn" id="sndChip" title="音效開關">🔊</span>
+    <span class="chip btn" id="rankChip" style="display:none" title="點一下看完整排行榜"></span>
+    <span class="chip" id="petChip" style="display:none"></span>
+    <span class="chip" id="scoreChip">⭐ 0</span>
+    <span class="chip" id="timeChip" style="display:none">⏱ 0:00</span>
+  </div>
+  <div class="panel" id="app"></div>
+</div>
+
+<script>
+/* ============================================================
+   國小數學互動遊戲　共用引擎  game-engine.js
+   ------------------------------------------------------------
+   單元包（units/unit-X-Y.js）必須先定義：
+     UNIT        單元設定（見 units/unit-1-2.js 的註解）
+     MIS         迷思代碼字典
+     LEVELS      四個關卡
+     MODES       玩法登錄表 { 模式名: {sub,title,stage,bind,judge,answer,onRight,choice} }
+   然後呼叫 GameEngine.start()。
+   ============================================================ */
+
+
+var UNIT_ID, UNIT_SUB;
+
+/* ======================================================================
+   ★★★ 全域設定（所有單元共用，改這裡就好）
+   ====================================================================== */
+var SHEET_API = 'https://script.google.com/macros/s/AKfycbymfdR-lDRz3jLf0fYpaDisEXbkYfsdgz3aAItaTxXvG4sR5t4BexdvfK8CmoUBaqIP/exec';
+var TEACHER_CODE = '1234';       /* 老師解鎖碼 */
+var MIN_CLASS = 3;               /* 全班至少幾人才用相對排名給點數 */
+var PENALTY = 3, FREEZE_MS = 1000;   /* 選擇題答錯的罰分與罰停毫秒 */
+
+/* 12 隻夥伴（所有單元共用） */
+var PETS = [
+  {f:"🐱",n:"小貓咪"}, {f:"🐶",n:"小狗狗"}, {f:"🐰",n:"小兔子"}, {f:"🐼",n:"小貓熊"},
+  {f:"🦊",n:"小狐狸"}, {f:"🐯",n:"小老虎"}, {f:"🐨",n:"無尾熊"}, {f:"🐸",n:"小青蛙"},
+  {f:"🐧",n:"小企鵝"}, {f:"🦁",n:"小獅子"}, {f:"🐵",n:"小猴子"}, {f:"🐹",n:"小倉鼠"}
+];
+
+/* 位值定義（數與計算類單元共用） */
+var PLACES = [
+  {k:'th', lab:'千位', unit:'個千', val:1000, cls:'k1000'},
+  {k:'h',  lab:'百位', unit:'個百', val:100,  cls:'k100'},
+  {k:'t',  lab:'十位', unit:'個十', val:10,   cls:'k10'},
+  {k:'o',  lab:'個位', unit:'個一', val:1,    cls:'k1'}
+];
+/* ===================== 共用：狀態 ===================== */
+var app=document.getElementById('app'), scoreChip=document.getElementById('scoreChip'),
+    timeChip=document.getElementById('timeChip'), petChip=document.getElementById('petChip'),
+    sndChip=document.getElementById('sndChip'), rankChip=document.getElementById('rankChip');
+
+var S = { score:0, stars:{}, unlocked:1, animal:null, name:'', records:{}, finalized:false };
+
+/* 老師解鎖碼：學生送出成績後畫面會鎖住，要重玩得由老師輸入這組數字 */
+var TEACHER_CODE = '1234';
+/* 存檔在 start() 裡讀，因為那時 UNIT 才存在 */
+function save(){ try{ localStorage.setItem('save-'+UNIT.id, JSON.stringify(S)); }catch(e){} }
+
+var DEV = (function(){
+  var k='math3-dev', v='';
+  try{ v=localStorage.getItem(k)||''; }catch(e){}
+  if(!v){ v='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+          try{ localStorage.setItem(k,v); }catch(e){} }
+  return v;
+})();
+var UID = '';   /* start() 時才組出來：裝置碼_單元代號_座位序號 */
+
+/* 同一台電腦輪流玩時，用座位序號把每個學生分開，才不會互相覆蓋 */
+function seatNo_(){
+  try{ return parseInt(localStorage.getItem('seat-'+UNIT.id)||'0',10)||0; }catch(e){ return SEAT_MEM; }
+}
+var SEAT_MEM = 0;
+function nextSeat_(){
+  var v = seatNo_() + 1;
+  SEAT_MEM = v;
+  try{ localStorage.setItem('seat-'+UNIT.id, String(v)); }catch(e){}
+  return v;
+}
+function makeUID(){
+  var seat = seatNo_();
+  return DEV + '_' + UNIT_ID + (seat ? '_s'+seat : '');
+}
+/* 換下一位同學：清空這一輪的成績，換一個新的身分 */
+function switchStudent(){
+  nextSeat_();
+  S = { score:0, stars:{}, unlocked:1, animal:null, name:'', records:{}, finalized:false };
+  UID = makeUID();
+  RANK_SNAP = null; LAST_CHASE = '';
+  save();
+  paintScore(); paintRank();
+  renderPick();
+}
+
+var SND = true;
+try{ SND = localStorage.getItem('math3-snd')!=='0'; }catch(e){}
+function paintSnd(){ sndChip.textContent = SND?'🔊':'🔇'; }
+sndChip.onclick=function(){
+  SND=!SND;
+  try{ localStorage.setItem('math3-snd',SND?'1':'0'); }catch(e){}
+  paintSnd();
+  if(SND){ sTap(); say('聲音打開了'); }
+  else { try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} }
+};
+paintSnd();
+
+/* 右上角的 ⭐ 一律用「排行榜採計的分數」＝ 已記錄的關卡 ＋ 正在玩的這一關，
+   才不會出現「畫面 180 分、榜上 170 分」這種對不起來的情況 */
+function paintScore(){
+  var t;
+  try{ t=provisionalSummary().gained; }catch(e){ t=S.score; }
+  scoreChip.textContent='⭐ '+t;
+}
+function pet(){ return PETS[S.animal]||PETS[0]; }
+function paintPet(){
+  if(S.animal===null){ petChip.style.display='none'; return; }
+  petChip.style.display='';
+  petChip.innerHTML='<span class="pet-mini"><span class="face">'+pet().f+'</span>'+pet().n+'</span>';
+}
+function fmt(s){ var m=Math.floor(s/60), r=s%60; return m+':'+(r<10?'0':'')+r; }
+function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function pctText(x){ return Math.round(x*100)+'%'; }
+
+var G=null, timer=null;
+
+/* ===================== 音效層 ===================== */
+var AC=null;
+function ac(){
+  if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(AC && AC.state==='suspended'){ try{ AC.resume(); }catch(e){} }
+  return AC;
+}
+function tone(freq,dur,type,vol,delay,slideTo){
+  if(!SND) return;
+  var a=ac(); if(!a) return;
+  try{
+    var t0=a.currentTime+(delay||0);
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(freq,t0);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);
+    g.gain.setValueAtTime(vol||.15,t0);
+    g.gain.exponentialRampToValueAtTime(.0008,t0+dur);
+    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+dur+.02);
+  }catch(e){}
+}
+function noise(dur,vol,from,to){
+  if(!SND) return;
+  var a=ac(); if(!a) return;
+  try{
+    var n=Math.floor(a.sampleRate*dur), buf=a.createBuffer(1,n,a.sampleRate), d=buf.getChannelData(0);
+    for(var i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    var src=a.createBufferSource(); src.buffer=buf;
+    var f=a.createBiquadFilter(); f.type='bandpass';
+    f.frequency.setValueAtTime(from||1200,a.currentTime);
+    f.frequency.exponentialRampToValueAtTime(to||400,a.currentTime+dur);
+    var g=a.createGain(); g.gain.setValueAtTime(vol||.12,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+  }catch(e){}
+}
+function sTap(){ tone(520,.05,'triangle',.10); }
+function sPick(){ tone(760,.06,'triangle',.11); }
+function sDrop(){ tone(300,.09,'sine',.16,0,180); noise(.09,.06,900,300); }
+function sWrong(){ tone(190,.26,'square',.13); tone(140,.3,'square',.1,.05); }
+function sRight(){ tone(660,.1,'sine',.14); tone(880,.1,'sine',.13,.09); tone(1180,.18,'sine',.12,.18); }
+function sCombo(n){ var b=520; for(var i=0;i<Math.min(n,5);i++) tone(b*Math.pow(1.16,i),.09,'triangle',.12,i*.06); }
+function sBreak(){ noise(.42,.16,2600,300); tone(420,.34,'sawtooth',.07,0,150); }
+function sMerge(){ tone(430,.1,'sine',.13,0,880); tone(1050,.16,'sine',.11,.1); }
+function sClear(){ [523,659,784,1046,1318].forEach(function(f,i){ tone(f,.22,'triangle',.13,i*.11); }); }
+function sStar(){ [880,1174,1568].forEach(function(f,i){ tone(f,.2,'sine',.12,i*.09); }); }
+function sTick(){ tone(1000,.03,'square',.07); }
+
+/* ===================== 光效層：彩帶／粒子 ===================== */
+var fxc=document.getElementById('fx'), fxx=fxc.getContext('2d'), parts=[], fxRun=false;
+function fxResize(){ fxc.width=innerWidth; fxc.height=innerHeight; }
+addEventListener('resize',fxResize); fxResize();
+var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function burst(x,y,colors,count,spread){
+  if(REDUCED) return;
+  for(var i=0;i<count;i++){
+    var a=Math.random()*Math.PI*2, sp=(spread||6)*(0.35+Math.random());
+    parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,g:.22,
+      c:colors[(Math.random()*colors.length)|0], s:4+Math.random()*6,
+      life:52+Math.random()*26, rot:Math.random()*6, vr:(Math.random()-.5)*.4});
+  }
+  runFX();
+}
+function confetti(){
+  if(REDUCED) return;
+  var cols=['#ffb020','#e07b00','#2fa46b','#3aa6e0','#e0603c','#fff'];
+  for(var i=0;i<130;i++){
+    parts.push({x:Math.random()*fxc.width, y:-20-Math.random()*220,
+      vx:(Math.random()-.5)*2.4, vy:2+Math.random()*3.4, g:.045,
+      c:cols[(Math.random()*cols.length)|0], s:5+Math.random()*7,
+      life:200+Math.random()*90, rot:Math.random()*6, vr:(Math.random()-.5)*.32});
+  }
+  runFX();
+}
+function burstAt(el,colors,n){
+  if(!el) return;
+  var r=el.getBoundingClientRect();
+  burst(r.left+r.width/2, r.top+r.height/2, colors||['#ffb020','#fff','#e07b00'], n||26, 6);
+}
+function runFX(){
+  if(fxRun) return; fxRun=true;
+  var step=function(){
+    fxx.clearRect(0,0,fxc.width,fxc.height);
+    for(var i=parts.length-1;i>=0;i--){
+      var p=parts[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.rot+=p.vr; p.life--;
+      if(p.life<=0 || p.y>fxc.height+60){ parts.splice(i,1); continue; }
+      fxx.save(); fxx.translate(p.x,p.y); fxx.rotate(p.rot);
+      fxx.fillStyle=p.c; fxx.globalAlpha=Math.min(1,p.life/26);
+      fxx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.62); fxx.restore();
+    }
+    if(parts.length) requestAnimationFrame(step);
+    else { fxx.clearRect(0,0,fxc.width,fxc.height); fxRun=false; }
+  };
+  requestAnimationFrame(step);
+}
+function flash(kind){
+  var p=document.querySelector('.panel'); if(!p) return;
+  var c = kind==='ok'?'flashok':'flashno';
+  p.classList.remove('flashok','flashno'); void p.offsetWidth; p.classList.add(c);
+  if(kind!=='ok'){ p.classList.remove('shake'); void p.offsetWidth; p.classList.add('shake'); }
+  setTimeout(function(){ p.classList.remove(c,'shake'); },520);
+}
+
+/* ===================== 點數機制（與 1-1 相同） ===================== */
+var CURVE_EXP=2.5, FAST_RATIO=0.7, MULT_FLOOR=0.6, NEED_3=0.930, NEED_2=0.758;
+function levelPerf(firstTry,total,sec,target,timeUp){
+  var acc=total?firstTry/total:0;
+  var fast=Math.round(target*FAST_RATIO);
+  var spd=timeUp?0:Math.min(1,fast/Math.max(sec,1));
+  var mult=MULT_FLOOR+(1-MULT_FLOOR)*spd;
+  return {acc:acc,spd:spd,mult:mult,fast:fast,perf:acc*mult};
+}
+function curvePoints(perf){
+  var raw=3*Math.pow(perf,CURVE_EXP), pts=Math.round(raw);
+  if(pts<1)pts=1; if(pts>3)pts=3;
+  return {raw:raw,pts:pts};
+}
+function ptsTitle(p){ return p>=3?"完美通關":p===2?"表現很好":"順利過關"; }
+
+/* ===================== 排行榜後端（三種來源） ===================== */
+var DB=null, DBmode='local', BOARD_OFF=null, CLOUD_ERR=false;
+function initBackend(){
+  if(SHEET_API) DBmode='cloud';
+  try{
+    if(window.claude && typeof window.claude.use==='function'){
+      window.claude.use('db').then(function(d){
+        if(d){ DB=d; DBmode='live'; pushScore();
+               if(document.getElementById('boardBody')) renderBoard(); }
+      }).catch(function(){});
+    }
+  }catch(e){}
+}
+var CLOUD_BUSY=false, CLOUD_PENDING=null, CLOUD_CB=null;
+function cloudPush(rec,cb){
+  if(!SHEET_API){ if(cb) cb(); return; }
+  if(CLOUD_BUSY){ CLOUD_PENDING=rec; CLOUD_CB=cb; return; }
+  CLOUD_BUSY=true;
+  var done=function(ok){
+    CLOUD_ERR=!ok; CLOUD_BUSY=false;
+    if(CLOUD_PENDING){ var r=CLOUD_PENDING, c=CLOUD_CB; CLOUD_PENDING=null; CLOUD_CB=null; cloudPush(r,c); }
+    else if(cb) cb();
+  };
+  try{
+    fetch(SHEET_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(rec)}).then(function(){done(true);}).catch(function(){done(false);});
+  }catch(e){ done(false); }
+}
+function cloudList(cb){
+  if(!SHEET_API){ cb(null); return; }
+  try{
+    fetch(SHEET_API+'?unit='+encodeURIComponent(UNIT_ID)+'&t='+Date.now())
+      .then(function(r){return r.json();})
+      .then(function(j){ cb(j&&j.list?j.list:null); }).catch(function(){ cb(null); });
+  }catch(e){ cb(null); }
+}
+function mySummary(){
+  var secs=0,gained=0,ft=0,tot=0,done=0,perfSum=0;
+  LEVELS.forEach(function(lv){
+    var r=S.records[lv.id]; if(!r) return;
+    done++; secs+=r.sec; gained+=r.gained; ft+=r.firstTry; tot+=r.total; perfSum+=r.perf;
+  });
+  var perf=done?perfSum/done:0;
+  return { uid:UID, unit:UNIT_ID, fin:(S.finalized?1:0), name:(S.name||UNIT.roleAnon),
+           pet:(S.animal===null?0:S.animal), done:done, secs:secs, gained:gained,
+           ft:ft, tot:tot, perf:perf, pts:(done?curvePoints(perf).pts:0), ts:Date.now() };
+}
+var MEMBOARD=[];
+function localBoard(){
+  try{ var v=localStorage.getItem('board-'+UNIT_ID); if(v!==null) MEMBOARD=JSON.parse(v)||[]; }catch(e){}
+  return MEMBOARD;
+}
+function localPut(rec){
+  var b=localBoard().slice(), hit=false;
+  b=b.map(function(x){ if(x.uid===rec.uid){hit=true;return rec;} return x; });
+  if(!hit) b.push(rec);
+  MEMBOARD=b;
+  try{ localStorage.setItem('board-'+UNIT_ID, JSON.stringify(b)); }catch(e){}
+}
+function pushScore(cb){
+  if(S.animal===null){ if(cb) cb(); return; }
+  var rec=mySummary();
+  localPut(rec);
+  paintRank();
+  if(DB){
+    try{ DB.doc('scores/'+UID).set(rec).then(function(){ if(cb) cb(); })
+      .catch(function(){ if(cb) cb(); }); }catch(e){ if(cb) cb(); }
+  }else if(DBmode==='cloud'){ cloudPush(rec,cb); }
+  else if(cb) cb();
+}
+
+/* ---------- 隨時看得到自己在排行榜的位置 ---------- */
+var RANK_IV=null;
+function paintRank(){
+  if(!rankChip) return;
+  var me=mySummary();
+  if(!me.done && !S.finalized){ rankChip.style.display='none'; return; }
+  var R=myRankNow(me);
+  rankChip.style.display='';
+  rankChip.className='chip btn'+(S.finalized?' done':'');
+  rankChip.innerHTML = (S.finalized?'🔒 ':'🏆 ')
+    + (R.pts ? '第 '+R.rank+'/'+R.n+' 名　🎁 '+R.pts+' 點'
+             : me.gained+' 分（班上 '+R.n+' 人，滿 '+MIN_CLASS+' 人才排名）');
+}
+rankChip.onclick=function(){ sTap(); boardOff(); renderBoard(); };
+function startRankPoll(){
+  if(RANK_IV) return;
+  RANK_IV=setInterval(function(){
+    refreshClass(function(){
+      paintRank();
+      /* 玩到一半時只播自己的名次變化，別人的留到排行榜再說 */
+      if(!document.getElementById('boardBody')){
+        var me=mySummary();
+        if(me.done) syncRanks(classList().filter(function(r){return r.uid!==UID;}).concat([me]), true);
+      }
+    });
+  }, 15000);
+}
+function sameUnit(r){ return r && (r.unit===UNIT_ID); }
+/* 只輸入名字、一關都還沒完成（也沒交卷）的人不算進排名：
+   不然全班都是 0 分時，排在前面的人會平白拿到 3 點，也會亂播「被超過了」 */
+function rankable(r){ return r && ((r.done||0)>0 || !!r.fin); }
+/* 同一個名字只留一列：學校電腦重開機被還原、或學生換到別台電腦，都會產生新的 uid。
+   留自己這台的那一列；都不是自己就留分數高的（同分留比較新的）。沒寫名字的不合併。 */
+function dedupeByName(list){
+  var keep={}, out=[];
+  list.forEach(function(r){
+    var k=String(r.name||'').trim();
+    if(!k || k===UNIT.roleAnon){ out.push(r); return; }
+    var o=keep[k];
+    if(!o){ keep[k]=r; return; }
+    var better = (r.uid===UID) ? true : (o.uid===UID) ? false
+               : (r.gained!==o.gained ? r.gained>o.gained : (r.ts||0)>(o.ts||0));
+    if(better) keep[k]=r;
+  });
+  for(var k in keep) out.push(keep[k]);
+  return out;
+}
+
+/* 排行榜排序 ＝ 得分高的在前，同分則用時短的在前 */
+function rankSort(a,b){
+  if(b.gained!==a.gained) return b.gained-a.gained;
+  return a.secs-b.secs;
+}
+
+/* ---------- 點數改成看班上的相對名次 ----------
+   前 1/3 → 3 點、中間 1/3 → 2 點、後 1/3 → 1 點。
+   班上不到 3 人時沒有比較基準，改用絕對標準（曲線）估算。 */
+var CLASS_LIST=[];
+function classList(){
+  var l=(CLASS_LIST&&CLASS_LIST.length)?CLASS_LIST:localBoard();
+  var myName=String(S.name||'').trim();
+  return dedupeByName(l.filter(function(x){
+    if(!(x&&typeof x.gained==='number'&&sameUnit(x)&&rankable(x))) return false;
+    /* 跟我同名、但不是這台電腦的舊紀錄：呼叫端會放進「現在的我」，舊的那列不要再算一次 */
+    if(myName && x.uid!==UID && String(x.name||'').trim()===myName) return false;
+    return true;
+  }));
+}
+function refreshClass(cb){
+  if(DB){
+    try{
+      DB.collection('scores').get().then(function(snap){
+        CLASS_LIST=snap.docs.map(function(d){return d.data();})
+                            .filter(function(x){return x&&typeof x.gained==='number';});
+        if(cb) cb();
+      }).catch(function(){ if(cb) cb(); });
+      return;
+    }catch(e){}
+  }
+  if(DBmode==='cloud'){
+    cloudList(function(l){
+      if(l) CLASS_LIST=l.filter(function(x){return x&&typeof x.gained==='number';});
+      if(cb) cb();
+    });
+    return;
+  }
+  CLASS_LIST=localBoard();
+  if(cb) cb();
+}
+function ptsByRank(idx,total){
+  if(total<MIN_CLASS) return null;
+  var pct = total>1 ? idx/(total-1) : 0;
+  return pct<=1/3 ? 3 : (pct<=2/3 ? 2 : 1);
+}
+/* 把「現在的我」放進全班名單裡排一次 */
+function myRankNow(me){
+  var list=classList().filter(function(r){ return r.uid!==me.uid; }).concat([me]);
+  list.sort(rankSort);
+  var idx=0;
+  for(var i=0;i<list.length;i++){ if(list[i].uid===me.uid){ idx=i; break; } }
+  return { rank:idx+1, n:list.length, pts:ptsByRank(idx,list.length) };
+}
+/* 含「正在玩、還沒記錄的這一關」的暫定總成績 */
+/* 跟排行榜同一套標準：得分高的比較好，同分比用時短 */
+function betterRun(gained,sec,old){
+  return gained>old.gained || (gained===old.gained && sec<old.sec);
+}
+function provisionalSummary(){
+  var m=mySummary();
+  if(G){
+    var old=S.records[G.lv.id];
+    /* 重玩：結算時只留比較好的那次，所以還沒超過舊紀錄前，分數維持舊紀錄，不會往下掉 */
+    if(old && !betterRun(G.gained,G.sec,old)) return m;
+    if(old){ m.gained-=old.gained; m.secs-=old.sec; }
+    m.gained+=G.gained; m.secs+=G.sec;
+    if(!old) m.done+=1;
+  }
+  return m;
+}
+/* ============================================================
+   名次播報：偵測排行榜的名次變動，唸出來並在畫面上標記
+   ============================================================ */
+var RANK_SNAP=null, RANK_DELTA={}, VOICE=null, VOICE_READY=false, LAST_SAY=0, LAST_CHASE='';
+
+function pickVoice(){
+  if(VOICE_READY) return VOICE;
+  try{
+    var vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+    if(!vs || !vs.length) return null;      /* 語音清單還沒載好，下次再試 */
+    for(var i=0;i<vs.length;i++){
+      if(/zh[-_]TW|cmn-Hant|Hanhan|Yating|Zhiwei/i.test(vs[i].lang+' '+vs[i].name)){ VOICE=vs[i]; break; }
+    }
+    if(!VOICE){
+      for(var j=0;j<vs.length;j++){
+        if(/^zh/i.test(vs[j].lang)){ VOICE=vs[j]; break; }
+      }
+    }
+    VOICE_READY=true;
+  }catch(e){}
+  return VOICE;
+}
+try{
+  if(window.speechSynthesis){
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged=function(){ VOICE_READY=false; pickVoice(); };
+  }
+}catch(e){}
+
+/* 唸出一句話（跟音效共用同一個開關）
+   queue=true 表示接在上一句後面唸，不要蓋掉它
+   ------------------------------------------------------------------
+   瀏覽器語音有兩個常見的坑，都在這裡處理掉：
+   1. cancel() 之後馬上 speak()，Chrome 會靜靜地不發聲 → 隔一個 tick 再送
+   2. 閒置久了語音引擎會被暫停 → 每次先 resume()
+   另外送出後檢查有沒有真的在唸，沒有就不指定語音再試一次。 */
+var SAY_Q=[], SAY_BUSY=false, SAY_FAIL=0;
+function ssyn(){ return window.speechSynthesis || null; }
+function say(text, queue){
+  if(!SND || !text) return;
+  var ss=ssyn(); if(!ss) return;
+  if(!queue){
+    SAY_Q.length=0; SAY_BUSY=false;
+    try{ if(ss.speaking || ss.pending) ss.cancel(); }catch(e){}
+  }
+  SAY_Q.push(text);
+  if(SAY_Q.length>3) SAY_Q.splice(0, SAY_Q.length-3);
+  setTimeout(speakNext, 0);         /* 讓 cancel() 先結束，再開始唸 */
+}
+function utter(t, useVoice){
+  var u=new SpeechSynthesisUtterance(t);
+  u.lang='zh-TW'; u.rate=1.05; u.pitch=1.12; u.volume=1;
+  if(useVoice){ var v=pickVoice(); if(v) u.voice=v; }
+  u.onend=function(){ SAY_BUSY=false; SAY_FAIL=0; speakNext(); };
+  u.onerror=function(){ SAY_BUSY=false; speakNext(); };
+  return u;
+}
+function speakNext(){
+  if(SAY_BUSY || !SAY_Q.length) return;
+  var ss=ssyn(); if(!ss){ SAY_Q.length=0; return; }
+  var t=SAY_Q.shift();
+  SAY_BUSY=true;
+  try{
+    try{ ss.resume(); }catch(e){}
+    ss.speak(utter(t,true));
+    /* 送出後確認真的有在唸，沒有就不指定語音再送一次 */
+    setTimeout(function(){
+      try{
+        if(SAY_BUSY && !ss.speaking && !ss.pending){
+          SAY_FAIL++;
+          ss.speak(utter(t,false));
+        }
+      }catch(e){}
+    },300);
+    /* 保險：8 秒還卡著就放行，免得整條佇列死掉 */
+    setTimeout(function(){ if(SAY_BUSY){ SAY_BUSY=false; speakNext(); } },8000);
+  }catch(e){ SAY_BUSY=false; }
+}
+/* 這台裝置到底能不能唸？給試聽鍵回報用 */
+function voiceReport(){
+  var ss=ssyn();
+  if(!ss) return {ok:false, msg:'這個瀏覽器不支援語音播報（請改用 Chrome 或 Edge）'};
+  var vs=[]; try{ vs=ss.getVoices()||[]; }catch(e){}
+  var zh=vs.filter(function(v){ return /^zh/i.test(v.lang); });
+  return { ok:true, total:vs.length, zh:zh.length,
+           name: zh.length? zh[0].name : (vs.length? vs[0].name : '（沒有語音）'),
+           speaking: !!(ss.speaking||ss.pending) };
+}
+
+/* 試聽：唸一段範例播報，上課前可以先確認喇叭和語音正常 */
+var DEMO_LINES=[
+  '小美加了 110 分、破了第 4 關，衝上第一名！',
+  '你加了 72 分，超過小華，衝上第 2 名！',
+  '小華加了 90 分，超過你了，你掉到第 3 名',
+  '再拿 20 分就能超過 小美，衝上第 1 名。'
+];
+var DEMO_I=0;
+function sayDemo(){
+  if(!SND){ SND=true; try{ localStorage.setItem('math3-snd','1'); }catch(e){} paintSnd(); }
+  var t=DEMO_LINES[DEMO_I % DEMO_LINES.length]; DEMO_I++;
+  ticker('🔔 先播三聲「叮」，接著唸：'+t, DEMO_I%2 ? 'up':'');
+  /* 先來一段音效，用來分辨是「整台沒聲音」還是「只有語音不會唸」 */
+  sRight();
+  setTimeout(function(){ ticker(t, DEMO_I%2 ? 'up':''); say(t); }, 700);
+  /* 0.9 秒後檢查有沒有真的發出聲音，沒有就把原因寫在畫面上 */
+  setTimeout(function(){
+    var r=voiceReport();
+    if(!r.ok){ ticker('⚠️ '+r.msg, 'down'); return; }
+    ticker('🔎 語音狀態：找到 '+r.total+' 個語音（中文 '+r.zh+' 個），使用「'+r.name+'」，'
+      + (r.speaking?'瀏覽器正在唸。<b>聽不到的話請調高喇叭音量</b>，或看看分頁有沒有被靜音。'
+                   :'但瀏覽器沒有進入朗讀狀態，請改用 Chrome 或 Edge 開啟。'), r.speaking?'':'down');
+  }, 1600);
+}
+
+/* 畫面上的播報條（沒有語音的裝置也看得到） */
+function ticker(text, cls){
+  var box=document.getElementById('rankTicker');
+  if(!box) return;
+  box.className='ticker '+(cls||'');
+  box.innerHTML=(cls==='up'?'🚀 ':cls==='down'?'⚠️ ':'📣 ')+esc(text);
+  box.style.display='';
+}
+
+/* 比對上一次的名次，找出這次的變動，並播報「誰、為什麼、變成第幾名」
+   ------------------------------------------------------------------
+   RANK_SNAP[uid] = { r:名次, g:總得分, d:完成關數, f:是否交卷 } */
+function syncRanks(list, selfOnly){
+  var sorted=list.slice().sort(rankSort), now={}, evts=[];
+  RANK_DELTA={};
+  sorted.forEach(function(r,i){
+    now[r.uid]={ r:i+1, g:r.gained||0, d:r.done||0, f:r.fin?1:0 };
+  });
+
+  if(RANK_SNAP){
+    var byOldRank={}, nameOf={};
+    for(var u in RANK_SNAP) byOldRank[RANK_SNAP[u].r]=u;
+    sorted.forEach(function(r){ nameOf[r.uid]=(r.uid===UID?'你':r.name); });
+
+    sorted.forEach(function(r,i){
+      var o=RANK_SNAP[r.uid], nn=i+1, me=(r.uid===UID), who=me?'你':r.name;
+      if(!o){
+        if(r.done>0) evts.push({p:2, cls:'', t:who+'上榜了，排在第 '+nn+' 名'});
+        return;
+      }
+      RANK_DELTA[r.uid]=o.r-nn;
+
+      /* 這一次為什麼會動：加了幾分、破了第幾關、還是交卷了 */
+      var dg=(r.gained||0)-o.g, dd=(r.done||0)-o.d, cause='';
+      if(dg>0) cause = who+'加了 '+dg+' 分';
+      if(dd>0) cause = cause ? (cause+'、破了第 '+r.done+' 關')
+                             : (who+'破了第 '+r.done+' 關');
+      if(r.fin && !o.f) cause = who+'交卷了';
+
+      if(nn<o.r){
+        var pu=byOldRank[nn], passed=(pu&&pu!==r.uid)?nameOf[pu]:'';
+        var tail = (nn===1) ? (me?'衝上第一名了！':'衝上第一名！')
+                 : passed   ? ('超過'+passed+'，'+(me?'衝上':'來到')+'第 '+nn+' 名')
+                            : ('前進 '+(o.r-nn)+' 名，'+(me?'衝上':'來到')+'第 '+nn+' 名');
+        evts.push({p: me?7:(nn===1?5:4), cls:'up', t:(cause? cause+'，':who)+tail});
+      }else if(nn>o.r){
+        if(me){
+          var by='';
+          for(var k=0;k<sorted.length;k++){
+            var s2=sorted[k], os=RANK_SNAP[s2.uid];
+            /* 新上榜（舊名單裡沒有）又排到你前面的人，也算是超過你的人 */
+            if(s2.uid!==UID && (!os || os.r>o.r) && (k+1)<nn){ by=s2.name; break; }
+          }
+          var bg = by ? (function(){
+            for(var m=0;m<sorted.length;m++){
+              if(sorted[m].name===by){
+                var d2=(sorted[m].gained||0)-(RANK_SNAP[sorted[m].uid]||{g:0}).g;
+                return d2>0 ? (by+'加了 '+d2+' 分，超過你了') : (by+'超過你了');
+              }
+            }
+            return by+'超過你了';
+          })() : '你被超過了';
+          evts.push({p:8, cls:'down', t: bg+'，你掉到第 '+nn+' 名'});
+        }
+      }else if(cause){
+        /* 名次沒變，但分數動了也要說一聲，排行榜才不會無聲跳動 */
+        evts.push({p: me?3:1, cls:'', t: cause+'，還是第 '+nn+' 名'});
+      }
+    });
+  }
+  RANK_SNAP=now;
+
+  if(!evts.length) return false;
+  evts.sort(function(a,b){ return b.p-a.p; });
+  if(selfOnly) evts=evts.filter(function(e){ return e.t.indexOf('你')>=0; });
+  if(!evts.length) return false;
+
+  ticker(evts[0].t, evts[0].cls);
+  for(var i=0;i<evts.length && i<3; i++) say(evts[i].t, i>0);
+  if(evts[0].cls==='up' && evts[0].t.indexOf('你')===0) confetti();
+  return true;
+}
+
+/* 追趕提示：離前一名還差多少（html 給畫面、speak 給語音） */
+function chaseInfo(list){
+  var sorted=list.slice().sort(rankSort), me=-1;
+  for(var i=0;i<sorted.length;i++){ if(sorted[i].uid===UID){ me=i; break; } }
+  if(me<0) return {html:'', speak:''};
+  if(me===0){
+    if(sorted.length<2) return {html:'', speak:''};
+    var gap=sorted[0].gained-sorted[1].gained;
+    return {
+      html:'<div class="chase lead">👑 你是第 1 名，領先第 2 名 <b>'+gap+'</b> 分——別被追上了！</div>',
+      speak:'你是第 1 名，領先第 2 名 '+gap+' 分，別被追上了。'
+    };
+  }
+  var up=sorted[me-1], diff=up.gained-sorted[me].gained;
+  if(diff<=0) return {
+    html:'<div class="chase">⚡ 你和第 '+(me)+' 名同分，<b>用時比較短就能超過</b>！</div>',
+    speak:'你和第 '+me+' 名同分，用時比較短就能超過。'
+  };
+  return {
+    html:'<div class="chase">🔥 再拿 <b>'+diff+'</b> 分就能超過 '+esc(up.name)+'，衝上第 '+me+' 名！</div>',
+    speak:'再拿 '+diff+' 分就能超過 '+up.name+'，衝上第 '+me+' 名。'
+  };
+}
+
+function boardOff(){
+  if(BOARD_OFF){ try{BOARD_OFF();}catch(e){} BOARD_OFF=null; }
+  LAST_CHASE='';                 /* 下次打開排行榜會重新唸一次目前處境 */
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  SAY_Q.length=0; SAY_BUSY=false;
+}
+function encodeRec(r){ try{ return UNIT.codePrefix+btoa(unescape(encodeURIComponent(JSON.stringify(r)))); }catch(e){ return ''; } }
+function decodeRec(code){
+  try{
+    code=(code||'').trim().replace(new RegExp('^'+UNIT.codePrefix),'');
+    var r=JSON.parse(decodeURIComponent(escape(atob(code))));
+    if(r&&r.uid&&typeof r.perf==='number') return r;
+  }catch(e){}
+  return null;
+}
+var BOARD_MSG=null, LAST_LIST=[], EXPORT_SORT='rank', EXPORT_TITLE='';
+function seatNo(name){
+  var t=String(name||''), m=t.match(/(\d+)\s*號/);
+  if(m) return parseInt(m[1],10);
+  var all=t.match(/\d+/g);
+  if(all&&all.length) return parseInt(all[all.length-1],10);
+  return 9999;
+}
+function boardModeHTML(){
+  if(DBmode==='live'&&DB)
+    return '<div class="mode on" id="modeBox">🟢 <b>線上即時排名</b>：同時在玩的同學會自動出現在表上。</div>';
+  if(DBmode==='cloud')
+    return '<div class="mode '+(CLOUD_ERR?'':'on')+'" id="modeBox">'
+      + (CLOUD_ERR ? '🟠 <b>連不上試算表</b>：先顯示本機排名。請確認網路，或檢查檔案最上面的 SHEET_API 網址。'
+                   : '🟢 <b>線上即時排名（Google 試算表）</b>：全班成績自動同步，每 6 秒更新一次。')
+      + '</div>';
+  return '<div class="mode" id="modeBox">💾 <b>本機排名</b>：這台電腦上玩過的人＋你匯入的同學成績。</div>';
+}
+function renderBoard(){
+  var live=(DBmode==='live'&&DB);
+  /* quiet：連線版一打開先用本機資料墊著畫，那份名單不完整，不拿來比名次 */
+  function paint(list, quiet){
+    list=dedupeByName(list.filter(function(r){ return sameUnit(r)&&rankable(r); })).sort(rankSort);
+    LAST_LIST=list;
+    var spoke=quiet ? false : syncRanks(list,false);
+    var ci=quiet ? {html:'',speak:''} : chaseInfo(list);
+    if(!quiet && !list.some(function(r){ return r.uid===UID; }))
+      ci.html='<div class="chase">🚩 你還沒完成任何一關，<b>完成第 1 關就會上榜</b>！</div>';
+    var ch=document.getElementById('chaseBox');
+    if(ch) ch.innerHTML=ci.html;
+    /* 追趕提示只在內容變了才唸，免得每 6 秒重播一次 */
+    if(ci.speak && ci.speak!==LAST_CHASE){
+      LAST_CHASE=ci.speak;
+      say(ci.speak, spoke);           /* 前面有播報就排在後面唸 */
+    }
+    var body=list.length?list.map(function(r,i){
+      var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1), me=r.uid===UID;
+      var rp=ptsByRank(i,list.length);
+      var d=RANK_DELTA[r.uid]||0;
+      var mv = d>0 ? '<span class="mv up">▲'+d+'</span>'
+             : d<0 ? '<span class="mv down">▼'+(-d)+'</span>' : '';
+      return '<tr class="'+(me?'me ':'')+(d>0?'rowup':d<0?'rowdown':'')+'">'
+        +'<td class="rk">'+medal+mv+'</td>'
+        +'<td class="nm">'+(PETS[r.pet]||PETS[0]).f+' '+esc(r.name)+(me?' <span class="youtag">你</span>':'')+'</td>'
+        +'<td class="pts">'+(rp?rp+' 點':'—')+'</td>'
+        +'<td>'+pctText(r.perf)+'</td><td>'+fmt(r.secs)+'</td><td>'+r.gained+'</td>'
+        +'<td>'+r.done+'/'+LEVELS.length+'</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="miss">還沒有人完成 '+UNIT.id+' 的任何一關</td></tr>';
+    var el=document.getElementById('boardBody'); if(el) el.innerHTML=body;
+  }
+  boardOff();
+  app.innerHTML =
+    '<div class="rhead"><div class="emoji">🏆</div><h2>'+UNIT.title+'　排行榜</h2>'
+    + '<p style="color:#7b8b95;font-size:14.5px">只顯示 <b>'+UNIT.sub+'</b> 的成績　·　依 <b>總得分 → 總用時</b> 排名<br>'
+    + '前 1/3 給 3 點、中間 1/3 給 2 點、後 1/3 給 1 點（全班滿 '+MIN_CLASS+' 人才排名）</p></div>'
+    + boardModeHTML()
+    + '<div class="trybar"><button class="btn ghost" id="tryVoice" '
+    + 'style="padding:9px 18px;font-size:14.5px">🔈 試聽播報</button>'
+    + '<span class="trynote">上課前先按一下，確認教室喇叭聽得到</span></div>'
+    + '<div class="ticker" id="rankTicker" style="display:none"></div>'
+    + '<div id="chaseBox"></div>'
+    + '<div class="tablewrap"><table class="sheet"><thead><tr>'
+    + '<th>名次</th><th>'+UNIT.role+'</th><th>🎁 點數</th><th>平均表現</th><th>⏱ 總用時</th><th>⭐ 得分</th><th>進度</th>'
+    + '</tr></thead><tbody id="boardBody"></tbody></table></div>'
+    + '<div class="ptbox"><h4>📮 沒有連線時，怎麼把成績合起來？</h4>'
+    + '<div style="font-size:14.5px;line-height:1.8;color:#6b5720;margin-bottom:10px">'
+    + '每個同學按「複製我的成績碼」，貼到老師的電腦這裡按「加入」。</div>'
+    + '<div class="codebar"><input id="codeIn" placeholder="貼上同學的成績碼 '+UNIT.codePrefix+'…">'
+    + '<button class="btn go" id="codeAdd" style="padding:11px 20px;font-size:15px">加入</button></div>'
+    + '<div class="codebar" style="margin-top:9px"><input id="codeOut" readonly value="'+esc(encodeRec(mySummary()))+'">'
+    + '<button class="btn main" id="codeCopy" style="padding:11px 20px;font-size:15px">複製我的成績碼</button></div>'
+    + '<div id="codeMsg" style="font-size:14px;margin-top:8px;color:'
+    + (BOARD_MSG&&BOARD_MSG.bad?'#8f3418':'#14683f')+'">'+(BOARD_MSG?esc(BOARD_MSG.text):'')+'</div>'
+    + '</div>'
+    + '<div class="actions" style="margin-top:20px">'
+    + '<button class="btn go" id="expo">📄 匯出成績（PDF）</button>'
+    + '<button class="btn main" id="map">回'+UNIT.home+' →</button>'
+    + '<button class="btn ghost" id="clearBoard">清空本機排行榜</button></div>';
+
+  document.getElementById('map').onclick=function(){ boardOff(); renderMap(); };
+  document.getElementById('expo').onclick=function(){ boardOff(); renderExport(); };
+  document.getElementById('tryVoice').onclick=function(){ sayDemo(); };
+  document.getElementById('clearBoard').onclick=function(){
+    MEMBOARD=[];
+    try{ localStorage.removeItem('board-'+UNIT_ID); }catch(e){}
+    pushScore(); BOARD_MSG={bad:false,text:'🧹 本機排行榜已清空（線上排名不受影響）。'}; renderBoard();
+  };
+  document.getElementById('codeCopy').onclick=function(){
+    var i=document.getElementById('codeOut'); i.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    var m=document.getElementById('codeMsg'); m.style.color='#14683f';
+    m.textContent='✅ 已複製，貼給老師就可以了。';
+  };
+  document.getElementById('codeAdd').onclick=function(){
+    var r=decodeRec(document.getElementById('codeIn').value);
+    if(!r){ BOARD_MSG={bad:true,text:'✖ 這個成績碼看不懂，請確認有整段複製到。'}; renderBoard(); return; }
+    localPut(r); BOARD_MSG={bad:false,text:'✅ 已加入 '+r.name+' 的成績。'}; renderBoard();
+  };
+  BOARD_MSG=null;
+
+  if(live){
+    paint(localBoard(), true);
+    BOARD_OFF=DB.collection('scores').onSnapshot(function(snap){
+      paint(snap.docs.map(function(d){return d.data();}).filter(function(x){return x&&typeof x.perf==='number';}));
+    }, function(){ DBmode='local'; renderBoard(); });
+  }else if(DBmode==='cloud'){
+    paint(localBoard(), true);
+    var tick=function(){
+      cloudList(function(list){
+        var was=CLOUD_ERR;
+        if(list){ CLOUD_ERR=false; paint(list.filter(function(x){return x&&typeof x.perf==='number';})); }
+        else { CLOUD_ERR=true; paint(localBoard(), true); }
+        var box=document.getElementById('modeBox');
+        if(box&&was!==CLOUD_ERR){
+          var tmp=document.createElement('div'); tmp.innerHTML=boardModeHTML();
+          box.parentNode.replaceChild(tmp.firstChild,box);
+        }
+      });
+    };
+    pushScore(tick);      /* 先確定自己的最新成績送出去，再抓榜，才不會看到舊資料 */
+    var iv=setInterval(tick,6000);
+    BOARD_OFF=function(){ clearInterval(iv); };
+  }else paint(localBoard());
+}
+
+function renderExport(){
+  var list=LAST_LIST.slice(), ranked=list.slice().sort(rankSort), rankOf={};
+  ranked.forEach(function(r,i){ rankOf[r.uid]=i+1; });
+  if(EXPORT_SORT==='seat'){
+    list.sort(function(a,b){
+      var sa=seatNo(a.name), sb=seatNo(b.name);
+      if(sa!==sb) return sa-sb;
+      return String(a.name).localeCompare(String(b.name),'zh-Hant');
+    });
+  }else list=ranked;
+  /* 點數要先算好，下面的統計才用得到 */
+  var rankPts={};
+  ranked.forEach(function(r,i){ rankPts[r.uid]=ptsByRank(i,ranked.length); });
+  var d=new Date(), stamp=d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+  var doneAll=list.filter(function(r){return r.done>=LEVELS.length;});
+  var ptsSum=0; doneAll.forEach(function(r){ptsSum+=(rankPts[r.uid]||0);});
+  var avgPts=doneAll.length?(ptsSum/doneAll.length).toFixed(2):'—';
+  var c3=0,c2=0,c1=0;
+  doneAll.forEach(function(r){ var q=rankPts[r.uid]||1; if(q>=3)c3++; else if(q===2)c2++; else c1++; });
+  var rows=list.length?list.map(function(r){
+    var seat=seatNo(r.name);
+    return '<tr><td class="rk">'+(rankOf[r.uid]||'')+'</td><td>'+(seat===9999?'—':seat)+'</td>'
+      +'<td class="nm">'+esc(r.name)+'</td>'
+      +'<td class="pts">'+(rankPts[r.uid]||'—')+'</td>'
+      +'<td>'+pctText(r.perf)+'</td><td>'+fmt(r.secs)+'</td><td>'+r.gained+'</td>'
+      +'<td>'+r.done+'/'+LEVELS.length+'</td></tr>';
+  }).join('') : '<tr><td colspan="8" class="miss">目前沒有成績可以匯出</td></tr>';
+
+  app.innerHTML =
+    '<div class="printhead"><h2 id="phTitle">'+esc(EXPORT_TITLE||(UNIT.title+'　成績單'))+'</h2>'
+    + '<div class="sub">'+UNIT.sub+'　·　列印日期 '+stamp+'　·　排序：'+(EXPORT_SORT==='seat'?'依座號':'依名次')+'</div></div>'
+    + '<div class="noprint"><div class="rhead" style="margin-bottom:10px"><div class="emoji">📄</div>'
+    + '<h2>匯出成績</h2><p style="color:#7b8b95;font-size:14.5px">選好排序後按「列印 / 存成 PDF」，'
+    + '在印表機那一欄選「另存為 PDF」。</p></div>'
+    + '<div class="namebar" style="max-width:520px"><label for="expTitle">標題（會印在最上面）</label>'
+    + '<input id="expTitle" maxlength="30" placeholder="例：3年2班　數學 '+UNIT.id+' 成績" value="'+esc(EXPORT_TITLE)+'"></div>'
+    + '<div class="segbar"><button class="seg '+(EXPORT_SORT==='rank'?'on':'')+'" data-s="rank">🏆 依名次排序</button>'
+    + '<button class="seg '+(EXPORT_SORT==='seat'?'on':'')+'" data-s="seat">🔢 依座號排序</button></div></div>'
+    + '<div class="tablewrap"><table class="sheet"><thead><tr>'
+    + '<th>名次</th><th>座號</th><th>姓名</th><th>點數</th><th>平均表現</th><th>總用時</th><th>總得分</th><th>進度</th>'
+    + '</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    + '<div class="statline">完成四關人數：<b>'+doneAll.length+'</b> 人　·　平均點數：<b>'+avgPts+'</b>　·　'
+    + '3 點 <b>'+c3+'</b> 人　/　2 點 <b>'+c2+'</b> 人　/　1 點 <b>'+c1+'</b> 人</div>'
+    + '<div class="signline">教師簽名：＿＿＿＿＿＿＿＿＿＿</div>'
+    + '<div class="actions noprint" style="margin-top:20px">'
+    + '<button class="btn go" id="doPrint">🖨 列印 / 存成 PDF</button>'
+    + '<button class="btn main" id="back">← 回排行榜</button></div>';
+  var t=document.getElementById('expTitle');
+  t.oninput=function(){ EXPORT_TITLE=t.value;
+    document.getElementById('phTitle').textContent=EXPORT_TITLE||(UNIT.title+'　成績單'); };
+  Array.prototype.forEach.call(app.querySelectorAll('.seg'),function(b){
+    b.onclick=function(){ EXPORT_SORT=b.dataset.s; sTap(); renderExport(); };
+  });
+  document.getElementById('doPrint').onclick=function(){ window.print(); };
+  document.getElementById('back').onclick=renderBoard;
+}
+
+/* ===================== 畫面：選夥伴 ===================== */
+function renderPick(){
+  clearTimer(); boardOff(); paintScore(); paintPet();
+  var cards=PETS.map(function(p,i){
+    return '<div class="pet '+(S.animal===i?'on':'')+'" data-i="'+i+'">'
+      +'<span class="face">'+p.f+'</span><div class="nm">'+p.n+'</div></div>';
+  }).join('');
+  app.innerHTML =
+    '<div class="pick-head"><div class="emoji">'+UNIT.pickEmoji+'</div><h2>'+UNIT.pickTitle+'</h2>'
+    + '<p>'+UNIT.pickSub+'</p></div>'
+    + '<div class="namebar"><label for="nameIn">我的名字（或座號）</label>'
+    + '<input id="nameIn" maxlength="10" placeholder="例：3年2班 12號" value="'+esc(S.name)+'"></div>'
+    + '<div class="pets">'+cards+'</div>'
+    + '<div class="actions" style="margin-top:20px"><button class="btn main" id="go" disabled>先寫名字、選夥伴</button></div>';
+  var goBtn=document.getElementById('go'), nameIn=document.getElementById('nameIn');
+  function syncGo(){
+    var ok=(nameIn.value.trim()!=='')&&S.animal!==null;
+    goBtn.disabled=!ok;
+    goBtn.textContent=ok?('和'+pet().n+UNIT.goWord+' →'):(nameIn.value.trim()===''?'先寫下名字':'再選一位夥伴');
+  }
+  nameIn.oninput=function(){ S.name=nameIn.value.trim(); save(); syncGo(); };
+  nameIn.onkeydown=function(e){ if(e.key==='Enter'&&!goBtn.disabled) goBtn.click(); };
+  syncGo();
+  Array.prototype.forEach.call(app.querySelectorAll('.pet'),function(el){
+    el.onclick=function(){
+      S.animal=+el.dataset.i; save(); sPick(); paintPet();
+      Array.prototype.forEach.call(app.querySelectorAll('.pet'),function(x){x.classList.remove('on');});
+      el.classList.add('on'); burstAt(el,['#ffb020','#fff'],14); syncGo();
+    };
+  });
+  goBtn.onclick=function(){
+    S.name=nameIn.value.trim(); save();
+    if(S.animal!==null&&S.name){ sMerge(); pushScore(); renderMap(); }
+  };
+}
+
+/* ===================== 畫面：工廠地圖 ===================== */
+function progEstHTML(){
+  var me=mySummary(), R=myRankNow(me), est=estimatePoints(null);
+  if(!me.done) return '　·　還沒有成績';
+  if(R.pts) return '　·　班上第 <b>'+R.rank+'</b> 名 / '+R.n+' 人　·　目前可得 <b>'+R.pts+' 點</b>'
+    + (me.done<LEVELS.length?'（還有 '+(LEVELS.length-me.done)+' 關沒玩，會拉低排名）':'');
+  return est ? '　·　目前預估 <b>'+est.C.pts+' 點</b>（班上人數不足，用絕對標準估）' : '';
+}
+function renderMap(){
+  clearTimer(); boardOff();
+  G=null;                     /* 先清掉關卡狀態，分數與預估點數才會算對 */
+  paintScore(); paintPet();
+  var allDone=LEVELS.every(function(lv){return S.records[lv.id];});
+  var playedCount=0, playTimes=0;
+  LEVELS.forEach(function(lv){
+    var r=S.records[lv.id];
+    if(r){ playedCount++; playTimes+=(r.plays||1); }
+  });
+  var est=estimatePoints(null);
+  var meNow=mySummary(), RNow=myRankNow(meNow);
+  refreshClass(function(){
+    var pl=document.getElementById('progEst');
+    if(pl) pl.innerHTML=progEstHTML();
+  });
+  var cards=LEVELS.map(function(lv,i){
+    var st=S.stars[lv.id]||0, rec=S.records[lv.id];
+    var prev=i>0?LEVELS[i-1]:null;
+    var locked=S.finalized || lv.wip || (prev && !S.records[prev.id]);
+    return '<div class="lv '+(locked?'locked':'')+'" data-i="'+i+'">'
+      +'<div class="stars">'+(st?'★'.repeat(st)+'☆'.repeat(3-st):(locked?'🔒':''))+'</div>'
+      +'<span class="tier">'+lv.id+'　'+lv.tier+'</span><h3>'+lv.name+'</h3>'
+      +'<div class="desc">'+lv.desc+'</div>'
+      +'<div class="meta">'+lv.items.length+' 題　·　'
+      +(lv.countdown?'⏱ 倒數 '+lv.timeLimit+' 秒':'⏱ 計時')
+      +'　·　滿速度 '+fmt(Math.round(lv.target*FAST_RATIO))+'</div>'
+      +(rec?'<div class="done">✔ '+fmt(rec.sec)+'　'+rec.gained+' 分　表現 '+pctText(rec.perf)
+           +'　·　玩過 '+(rec.plays||1)+' 次</div>'
+        :(lv.wip?'<div class="meta" style="color:#8b7a55">🚧 製作中</div>'
+          :locked&&prev?'<div class="meta" style="color:#8b7a55">🔒 先完成 '+prev.id+' '+prev.name+'</div>'
+                      :'<div class="meta" style="color:#c0392b">● 還沒挑戰</div>'))
+      +'</div>';
+  }).join('');
+  app.innerHTML =
+    '<div class="fac-head"><div class="emoji">'+pet().f+UNIT.emoji+'</div><h2>'+UNIT.title+'</h2>'
+    + '<p style="font-weight:800;color:var(--brandink);font-size:16px">'+UNIT.role+'：'+esc(S.name||UNIT.roleAnon)+'</p>'
+    + '<p>'+UNIT.intro+'</p>'
+    + '<div class="progline">📋 我的進度：完成 <b>'+playedCount+' / '+LEVELS.length+'</b> 關'
+    + '　·　總共玩了 <b>'+playTimes+'</b> 次'
+    + '<span id="progEst">'+progEstHTML()+'</span></div></div>'
+    + '<div class="goal"><b>🎯 這一站要學會：</b>'+UNIT.goal+'</div>'
+    + '<div class="levels">'+cards+'</div>'
+    + '<div class="bonus">📸 <b>加分任務：</b>'+UNIT.bonus+'</div>'
+    + (S.finalized
+        ? '<div class="finalbar">🔒 <b>成績已經送出了</b><br>'
+          + '這個帳號以目前的分數為準，四關都已鎖住，不能再遊玩。'
+          + '<div style="margin-top:8px;font-size:13.5px;color:#8b7a55">'
+          + '要重玩請找老師解鎖。</div></div>'
+        : '')
+    + '<div class="actions" style="margin-top:18px">'
+    + (allDone?'<button class="btn go" id="report">🏅 看'+UNIT.certName+'</button>':'')
+    + '<button class="btn main" id="board">🏆 排行榜</button>'
+    + (!S.finalized?'<button class="btn stop" id="stopAll">⏹ 結束並送出成績</button>':'')
+    + (!S.finalized?'<button class="btn ghost" id="chpet">✏️ 改名字／換夥伴</button>':'')
+    + '<button class="btn ghost" id="nextkid">🔄 換下一位同學</button>'
+    + (!S.finalized&&playedCount>0?'<button class="btn ghost" id="reset">重新開始</button>':'')
+    + (S.finalized?'<button class="btn ghost" id="unlock">👩‍🏫 老師解鎖</button>':'')
+    + '</div>';
+  Array.prototype.forEach.call(app.querySelectorAll('.lv'),function(el){
+    el.onclick=function(){
+      if(el.classList.contains('locked')){
+        sWrong();
+        var i=+el.dataset.i, prev=i>0?LEVELS[i-1]:null;
+        alertBar(S.finalized ? '成績已經送出了，不能再遊玩。'
+                 : LEVELS[i].wip ? '這一關還在製作中。'
+                 : '要先完成 '+prev.id+' '+prev.name+' 才會解鎖這一關。');
+        return;
+      }
+      sTap(); startLevel(+el.dataset.i);
+    };
+  });
+  var rp=document.getElementById('report'); if(rp) rp.onclick=renderReport;
+  document.getElementById('board').onclick=renderBoard;
+  var cp=document.getElementById('chpet'); if(cp) cp.onclick=renderPick;
+  var nk=document.getElementById('nextkid'); if(nk) nk.onclick=openSwitch;
+  var sa=document.getElementById('stopAll'); if(sa) sa.onclick=openStop;
+  var ul=document.getElementById('unlock'); if(ul) ul.onclick=openUnlock;
+  var r=document.getElementById('reset');
+  if(r) r.onclick=function(){ S.score=0;S.stars={};S.unlocked=1;S.records={}; save(); renderMap(); };
+  paintRank();
+}
+
+/* ===================== 關卡流程 ===================== */
+function startLevel(li){
+  if(S.finalized){ sWrong(); return; }
+  if(LEVELS[li].wip){ sWrong(); return; }
+  if(li>0 && !S.records[LEVELS[li-1].id]){ sWrong(); return; }
+  clearTimer(); boardOff();
+  var lv=LEVELS[li];
+  G={ li:li, lv:lv, qi:0, tries:0, firstTry:0, wrongTotal:0, combo:0, bestCombo:0,
+      codes:{}, gained:0, timeUp:false, sec:0, st:null, paused:false, stopped:false, frozen:false };
+  timeChip.style.display=''; tickPaint(); paintScore();
+  timer=setInterval(function(){
+    if(G.paused) return;
+    G.sec++; tickPaint();
+    if(lv.countdown){
+      var left=lv.timeLimit-G.sec;
+      if(left<=10&&left>0) sTick();
+      if(G.sec>=lv.timeLimit){ G.timeUp=true; clearTimer(); finish(); }
+    }
+  },1000);
+  renderQ();
+}
+function tickPaint(){
+  var lv=G.lv;
+  if(lv.countdown){
+    var left=lv.timeLimit-G.sec;
+    timeChip.textContent='⏱ '+left;
+    timeChip.className='chip'+(left<=20?' warn':'');
+  }else{
+    timeChip.textContent='⏱ '+fmt(G.sec);
+    timeChip.className='chip'+(G.sec>lv.target?' over':'');
+  }
+}
+function clearTimer(){ if(timer){clearInterval(timer);timer=null;} timeChip.style.display='none'; }
+
+function renderQ(){
+  var lv=G.lv, it=lv.items[G.qi];
+  G.tries=0;
+  var pct=Math.round(G.qi/lv.items.length*100);
+  var M=MODES[lv.mode];
+  if(!M){ app.innerHTML='<div class="fb no">找不到玩法模組：'+esc(lv.mode)+'</div>'; return; }
+  var sub = M.sub ? M.sub(it,lv) : '';
+  var stage = M.stage(it,lv);
+
+  app.innerHTML =
+    '<div class="qhead"><span class="lvname">'+lv.id+'　'+lv.name+'</span>'
+    + '<span class="cnt">第 '+(G.qi+1)+' / '+lv.items.length+' 題</span><span class="spacer"></span>'
+    + '<button class="btn ghost" style="padding:7px 14px;font-size:14px" id="back">← 回'+UNIT.home+'</button></div>'
+    + '<div class="bar"><i style="width:'+pct+'%"></i></div>'
+    + '<div class="buddy" id="buddy">'+pet().f+'</div>'
+    + '<div class="qtext">'+(M.title?M.title(it,lv):'')+'</div>'
+    + '<div class="qsub">'+sub+'</div>'
+    + '<div class="hintbox">💡 '+lv.hint+'</div>'
+    + '<div id="fb"></div>'
+    + '<div class="stage" id="stage">'+(G.combo>=2?'<div class="combo">🔥 連續答對 ×'+G.combo+'</div>':'')+stage+'</div>'
+    + '<div class="actions">'
+    + (M.noCheck?'':'<button class="btn main" id="check">確定！</button>')
+    + '</div>';
+  document.getElementById('back').onclick=function(){ clearTimer(); renderMap(); };
+  var ck=document.getElementById('check');
+  if(ck) ck.onclick=check;
+  bindStage();
+}
+function buddyReact(kind){
+  var b=document.getElementById('buddy'); if(!b) return;
+  b.className='buddy'; void b.offsetWidth; b.className='buddy '+kind;
+}
+
+function bindStage(){
+  var M=MODES[G.lv.mode];
+  if(M && M.bind) M.bind();
+}
+function noteMis(code){
+  G.codes[code]=(G.codes[code]||0)+1;
+}
+
+/* ---------- 選擇題的小處罰：扣分 + 罰停 1 秒 ---------- */
+
+function isChoiceMode(){
+  var M=MODES[G.lv.mode];
+  if(!M) return false;
+  return typeof M.choice==='function' ? !!M.choice() : !!M.choice;
+}
+function sPenalty(){ tone(300,.14,'square',.14); tone(200,.22,'square',.13,.13); }
+function floatPen(txt){
+  var r=scoreChip.getBoundingClientRect();
+  var d=document.createElement('div');
+  d.className='floatpen'; d.textContent=txt;
+  d.style.left=(r.left+r.width/2-18)+'px';
+  d.style.top=(r.top+4)+'px';
+  document.body.appendChild(d);
+  setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },1000);
+}
+function applyPenalty(){
+  G.gained=Math.max(0,G.gained-PENALTY);
+  S.score=Math.max(0,S.score-PENALTY);
+  paintScore(); save(); sPenalty();
+  floatPen('−'+PENALTY);
+  scoreChip.classList.add('hit');
+  setTimeout(function(){ scoreChip.classList.remove('hit'); },620);
+
+  /* 罰停：選項與確定鍵鎖住 1 秒
+     記住是哪一局：1 秒內學生可能已經離開關卡（G 變成 null）或開了新的一關 */
+  var g=G;
+  g.frozen=true;
+  var stage=document.getElementById('stage');
+  var btn=document.getElementById('check');
+  if(stage) stage.classList.add('frozen');
+  if(btn) btn.disabled=true;
+  var fb=document.querySelector('.fb');
+  var bar=document.createElement('div');
+  bar.className='freezebar'; bar.id='freezebar';
+  var left=Math.round(FREEZE_MS/1000);
+  bar.innerHTML='⏳ 罰停 <b>'+left+'</b> 秒…先看清楚題目再選';
+  if(fb) fb.appendChild(bar);
+  var t0=Date.now();
+  var iv=setInterval(function(){
+    var rest=Math.max(0,Math.ceil((FREEZE_MS-(Date.now()-t0))/1000));
+    var b=document.getElementById('freezebar');
+    if(b) b.innerHTML='⏳ 罰停 <b>'+rest+'</b> 秒…先看清楚題目再選';
+  },200);
+  setTimeout(function(){
+    clearInterval(iv);
+    g.frozen=false;
+    if(G!==g) return;
+    var st=document.getElementById('stage'); if(st) st.classList.remove('frozen');
+    var bt=document.getElementById('check'); if(bt) bt.disabled=false;
+    var b=document.getElementById('freezebar');
+    if(b) b.outerHTML='<div class="freezebar done">✅ 可以再選一次了</div>';
+    sTap();
+  },FREEZE_MS);
+}
+
+/* ===================== 判題 ===================== */
+function check(){
+  if(G&&G.frozen) return;
+  var lv=G.lv, it=lv.items[G.qi], M=MODES[lv.mode];
+  G.tries++;
+  var res = M.judge(it,lv) || {};
+  /* halt：題目還沒作答完，不算一次嘗試，也不罰
+     tone:'ok' 用在多步驟的關卡——這一步做對了，繼續下一步 */
+  if(res.halt){
+    var tone = res.tone==='ok' ? 'ok' : 'no';
+    showFb(tone, res.msg||'還沒做完喔。');
+    G.tries--;
+    if(tone==='ok'){ sPick(); }
+    else { sWrong(); flash('no'); }
+    return;
+  }
+  if(res.ok) onRight(it); else onWrong(it, res.code||null);
+}
+function onRight(it){
+  var lv=G.lv;
+  G.combo++; if(G.combo>G.bestCombo) G.bestCombo=G.combo;
+  var base = G.tries===1?10:4;
+  var bonus = (G.tries===1 && G.combo>=3) ? 3 : 0;
+  if(G.tries===1) G.firstTry++;
+  G.gained+=base+bonus; S.score+=base+bonus; paintScore();
+  buddyReact('happy'); flash('ok');
+  if(G.combo>=3) sCombo(G.combo); else sRight();
+  burstAt(document.getElementById('stage'),['#ffb020','#2fa46b','#fff','#3aa6e0'],40);
+
+  var msg = G.tries===1?('✅ 答對了！＋'+base+' 分'):('✅ 這次對了！＋'+base+' 分');
+  if(bonus) msg += '　🔥 連續答對 ×'+G.combo+' 追加 ＋'+bonus+' 分';
+  var M=MODES[G.lv.mode];
+  var extra = M.onRight ? M.onRight(it) : null;
+  if(extra && extra.msg) msg += extra.msg;
+  showFb('ok',msg);
+  var chk=document.getElementById('check');
+  if(chk) chk.disabled=true;
+  /* after：模組要改畫面的副作用，等回饋和按鈕都處理完才跑 */
+  if(extra && extra.after) extra.after();
+  /* hold：模組自己接管接下來的流程（例如換鈔機要先動手驗證） */
+  if(extra && extra.hold) return;
+  nextButton();
+}
+/* 玩法模組接管流程時，可以自己叫出「下一題」 */
+function nextButton(){
+  var last=G.qi+1>=G.lv.items.length;
+  var act=document.querySelector('.actions');
+  if(!act) return;
+  act.innerHTML='<button class="btn go" id="next">'+(last?'看結果 →':'下一題 →')+'</button>';
+  var b=document.getElementById('next');
+  b.onclick=function(){
+    G.qi++; sTap();
+    if(G.qi<G.lv.items.length) renderQ(); else { clearTimer(); finish(); }
+  };
+  b.focus();
+}
+function onWrong(it,code){
+  G.combo=0; G.wrongTotal++;
+  buddyReact('sad'); sWrong(); flash('no');
+  var pen=isChoiceMode();
+  var m='';
+  if(pen) m += '<div class="penline">⛔ <b>選錯了</b>　扣 <b>'+PENALTY+' 分</b>　·　罰停 <b>1 秒</b></div>';
+  if(code){ noteMis(code); m+='💡 '+MIS[code]+'<span class="code">'+code+'</span>'; }
+  else m+='再想想看：'+G.lv.hint;
+  var M=MODES[G.lv.mode];
+  var ex = M.onWrong ? M.onWrong(it,code) : null;
+  if(ex && ex.msg) m += ex.msg;
+  if(!(ex && ex.hold) && G.tries>=2) m += '<div class="ans">'+answerText(it)+'</div>';
+  showFb('no',m);
+  if(ex && ex.after) ex.after();
+  if(pen) applyPenalty();
+}
+function answerText(it){
+  var M=MODES[G.lv.mode];
+  return (M && M.answer) ? M.answer(it) : '';
+}
+function showFb(kind,html){
+  document.getElementById('fb').innerHTML='<div class="fb '+kind+'">'+html+'</div>';
+}
+
+/* ===================== 停止鍵：先推算點數，再決定要不要停 ===================== */
+function estimatePoints(provPerf){
+  /* 沒玩過的關卡一律算 0 分——只玩一關不可能拿到滿點 */
+  var sum=0, got=0;
+  LEVELS.forEach(function(lv){
+    if(G && lv.id===G.lv.id){ if(provPerf!=null){ sum+=provPerf; got++; } return; }
+    var r=S.records[lv.id]; if(r){ sum+=r.perf; got++; }
+  });
+  if(!got) return null;
+  var avg=sum/LEVELS.length;
+  return { avg:avg, n:got, C:curvePoints(avg) };
+}
+/* 依排行榜推算：現在收手可以拿幾點 */
+function rankEstHTML(est){
+  var me=provisionalSummary();
+  var R=myRankNow(me);
+  var h='<div class="ptrow"><span>目前總得分（四關累計）</span><b>'+me.gained+' 分</b></div>'
+      + '<div class="ptrow"><span>目前總用時</span><b>'+fmt(me.secs)+'</b></div>'
+      + '<div class="ptrow"><span>完成關卡</span><b>'+me.done+' / '+LEVELS.length+' 關</b></div>';
+  if(R.pts){
+    h += '<div class="ptrow"><span>班上排名（得分高→用時短）</span><b>第 '+R.rank+' 名 / 共 '+R.n+' 人</b></div>'
+       + '<div class="estbig">🎁 可得 '+R.pts+' 點</div>'
+       + '<div class="estsub">排名在全班<b>前 1/3</b> 給 3 點、<b>中間 1/3</b> 給 2 點、<b>後 1/3</b> 給 1 點。'
+       + '沒玩的關卡沒有分數，排名自然會往後。</div>';
+  }else{
+    h += '<div class="ptrow"><span>班上人數</span><b>'+R.n+' 人（不足 '+MIN_CLASS+' 人無法排名）</b></div>'
+       + (est ? '<div class="estbig">🎁 預估 '+est.C.pts+' 點</div>'
+              + '<div class="estsub">改用絕對標準估算：四關平均表現 '+pctText(est.avg)
+              + '（沒玩的關算 0）。等班上人多一點就會改用排名。</div>'
+             : '<div class="estsub">還沒有成績可以估算。</div>');
+  }
+  return h;
+}
+function alertBar(msg){
+  var old=document.getElementById('alertBar');
+  if(old&&old.parentNode) old.parentNode.removeChild(old);
+  var d=document.createElement('div');
+  d.id='alertBar'; d.className='alertbar'; d.textContent='🔒 '+msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },2600);
+}
+function closeStop(){
+  var m=document.getElementById('stopModal');
+  if(m&&m.parentNode) m.parentNode.removeChild(m);
+  if(G) G.paused=false;
+}
+/* 主畫面的「結束並送出成績」：送出後這個帳號就定案，不能再玩 */
+function openStop(){
+  if(document.getElementById('stopModal')) return;
+  sTap();
+  var me=mySummary();
+  var est=estimatePoints(null);
+  var meNow=mySummary();
+  var body=(meNow.done===0
+      ? '<div class="warnbox" style="margin:0 0 10px">😮 你還<b>一關都沒有完成</b>，'
+        + '現在送出的話成績會是 <b>0 分</b>。確定嗎？</div>'
+      : '')
+    + '<div id="rankEst">'+rankEstHTML(est)+'</div>';
+  refreshClass(function(){
+    var box=document.getElementById('rankEst');
+    if(box) box.innerHTML=rankEstHTML(estimatePoints(null));
+  });
+  var d=document.createElement('div');
+  d.className='modal'; d.id='stopModal';
+  d.innerHTML='<div class="mbox"><h3>⏹ 結束並送出成績</h3>'
+    + '<div class="msub">'+esc(S.name||UNIT.roleAnon)+'　·　'+UNIT.sub+'</div>'
+    + '<div class="ptbox" style="margin-bottom:14px">'+body+'</div>'
+    + '<div class="warnbox">⚠️ 送出以後，這個帳號<b>就以這個分數為準</b>，'
+    + '四關全部鎖住、不能再玩，也不能重新開始。確定要送出嗎？</div>'
+    + '<div class="actions"><button class="btn go" id="mGo">先不要，繼續玩</button>'
+    + '<button class="btn main" id="mStop">確定送出，不玩了</button></div></div>';
+  document.body.appendChild(d);
+  d.onclick=function(e){ if(e.target===d) closeStop(); };
+  document.getElementById('mGo').onclick=function(){ sTap(); closeStop(); };
+  document.getElementById('mStop').onclick=function(){
+    closeStop();
+    S.finalized=true; S.finalTs=Date.now(); save();
+    sClear(); confetti();
+    pushScore(function(){ refreshClass(paintRank); });
+    renderMap();
+  };
+}
+/* 換下一位同學：先確認，因為會清掉這一輪的成績 */
+function openSwitch(){
+  if(document.getElementById('switchModal')) return;
+  sTap();
+  var me=mySummary();
+  var d=document.createElement('div');
+  d.className='modal'; d.id='switchModal';
+  d.innerHTML='<div class="mbox"><h3>🔄 換下一位同學</h3>'
+    + '<div class="msub">'+esc(S.name||UNIT.roleAnon)+' 的成績會留在排行榜上</div>'
+    + '<div class="ptbox" style="margin-bottom:14px">'
+    + '<div class="ptrow"><span>目前的成績</span><b>'+me.gained+' 分　'+me.done+'/'+LEVELS.length+' 關</b></div>'
+    + '<div class="ptrow"><span>換人之後</span><b>畫面會清空，重新開始</b></div>'
+    + '</div>'
+    + '<div class="warnbox">這台電腦要換下一位同學來玩嗎？<br>'
+    + '上一位的成績<b>已經記在排行榜</b>，不會不見。</div>'
+    + '<div class="actions"><button class="btn go" id="swNo">還沒，我要繼續玩</button>'
+    + '<button class="btn main" id="swYes">好，換下一位</button></div></div>';
+  document.body.appendChild(d);
+  var close=function(){ if(d.parentNode) d.parentNode.removeChild(d); };
+  d.onclick=function(e){ if(e.target===d) close(); };
+  document.getElementById('swNo').onclick=function(){ sTap(); close(); };
+  document.getElementById('swYes').onclick=function(){
+    close();
+    pushScore(function(){ switchStudent(); });   /* 先確定成績上傳，再換人 */
+  };
+}
+
+/* 老師解鎖 */
+function openUnlock(){
+  if(document.getElementById('unlockModal')) return;
+  var d=document.createElement('div');
+  d.className='modal'; d.id='unlockModal';
+  d.innerHTML='<div class="mbox"><h3>👩‍🏫 老師解鎖</h3>'
+    + '<div class="msub">解鎖後這位學生可以重新遊玩，成績會重新計算</div>'
+    + '<div class="namebar" style="margin-bottom:8px"><label for="ucode">請輸入解鎖碼</label>'
+    + '<input id="ucode" inputmode="numeric" maxlength="8" placeholder="4 位數字"></div>'
+    + '<div id="umsg" style="text-align:center;font-size:14px;color:#8f3418;min-height:20px"></div>'
+    + '<div class="actions"><button class="btn ghost" id="uCancel">取消</button>'
+    + '<button class="btn main" id="uOk">解鎖</button></div></div>';
+  document.body.appendChild(d);
+  var close=function(){ if(d.parentNode) d.parentNode.removeChild(d); };
+  d.onclick=function(e){ if(e.target===d) close(); };
+  document.getElementById('uCancel').onclick=close;
+  document.getElementById('ucode').focus();
+  var go=function(){
+    var v=(document.getElementById('ucode').value||'').trim();
+    if(v!==TEACHER_CODE){ document.getElementById('umsg').textContent='✖ 解鎖碼不對'; sWrong(); return; }
+    S.finalized=false; save(); close(); sMerge(); pushScore(); renderMap();
+  };
+  document.getElementById('uOk').onclick=go;
+  document.getElementById('ucode').onkeydown=function(e){ if(e.key==='Enter') go(); };
+}
+
+/* ===================== 單關結算 ===================== */
+function finish(){
+  clearTimer();
+  var lv=G.lv, total=lv.items.length;
+  var P=levelPerf(G.firstTry,total,G.sec,lv.target,G.timeUp);
+  var stars=P.perf>=NEED_3?3:P.perf>=NEED_2?2:1;
+  if(stars>(S.stars[lv.id]||0)) S.stars[lv.id]=stars;
+  var old=S.records[lv.id];
+  var plays=(old&&old.plays?old.plays:0)+1;
+  var kept = !!old && !betterRun(G.gained,G.sec,old);
+  if(!kept){
+    S.records[lv.id]={sec:G.sec,gained:G.gained,firstTry:G.firstTry,total:total,
+                      acc:P.acc,spd:P.spd,perf:P.perf,timeUp:G.timeUp,
+                      stopped:!!G.stopped,done:G.qi,plays:plays};
+  }else{
+    old.plays=plays;
+  }
+  save(); paintScore(); pushScore(function(){ refreshClass(paintRank); });
+  if(!G.timeUp&&!G.stopped){ sClear(); confetti(); if(stars===3) setTimeout(function(){sStar();confetti();},450); }
+  else if(G.stopped) sMerge();
+  else sWrong();
+
+  var codes=Object.keys(G.codes).map(function(c){return [c,G.codes[c]];}).sort(function(a,b){return b[1]-a[1];});
+  var remember = codes.length
+    ? '<div class="remember"><h4>📌 這一關要特別記住</h4><ul>'
+      + codes.map(function(p){return '<li>'+MIS[p[0]]+'<span class="code">'+p[0]+' ×'+p[1]+'</span></li>';}).join('')
+      + '</ul></div>'
+    : (G.wrongTotal
+        ? '<div class="allgood">👍 '+(UNIT.slipText||'沒有踩到常見的迷思陷阱，錯的是操作上的小失誤。')+'</div>'
+        : '<div class="allgood">🎉 全部一次做對，'+(UNIT.praiseText||'這一關的觀念很穩！')+'</div>');
+  var allDone=LEVELS.every(function(l){return S.records[l.id];});
+
+  app.innerHTML =
+    '<div class="rhead"><div class="emoji">'+pet().f+(G.timeUp?'⏰':(stars===3?'🏆':stars===2?'🎖️':'💪'))+'</div>'
+    + '<h2>'+(G.timeUp?'時間到！':(G.stopped?lv.id+' '+lv.name+'　提早結算':lv.id+' '+lv.name+' 完成'))+'</h2>'
+    + '<div style="font-size:26px;letter-spacing:3px;color:#ffb020">'+'★'.repeat(stars)+'☆'.repeat(3-stars)+'</div></div>'
+    + (kept?'<div class="chase">📌 這次 '+G.gained+' 分，沒有超過之前的 <b>'+old.gained+' 分</b>，保留之前比較好的成績。</div>':'')
+    + '<div class="rstats">'
+    + '<div class="stat"><b>'+fmt(G.sec)+'</b><span>⏱ 用時</span></div>'
+    + '<div class="stat"><b>'+G.firstTry+'/'+total+'</b><span>一次就做對</span></div>'
+    + (G.stopped?'<div class="stat"><b>'+G.qi+'/'+total+'</b><span>⏹ 做到第幾題</span></div>':'')
+    + '<div class="stat"><b>+'+G.gained+'</b><span>⭐ 本關得分</span></div>'
+    + '<div class="stat"><b>×'+G.bestCombo+'</b><span>🔥 最長連擊</span></div>'
+    + '<div class="stat pt"><b>'+pctText(P.perf)+'</b><span>🎁 本關表現</span></div></div>'
+    + '<div class="ptbox"><h4>🎁 本關表現怎麼算的（正確度 × 速度倍率）</h4>'
+    + '<div class="ptrow"><span>正確度：一次做對 '+G.firstTry+'/'+total+'</span><b>'+pctText(P.acc)+'</b></div>'
+    + '<div class="ptrow"><span>速度倍率：用時 '+fmt(G.sec)+'（'+fmt(P.fast)+' 以內才是滿倍率）'
+      +(G.timeUp?'（時間到）':'')+'</span><b>× '+pctText(P.mult)+'</b></div>'
+    + '<div class="ptrow"><span>本關表現（四關平均後才換算點數）</span><b>'+pctText(P.perf)+'</b></div></div>'
+    + remember
+    + '<div class="actions" style="margin-top:20px">'
+    + '<button class="btn ghost" id="again">重玩這一關</button>'
+    + (allDone?'<button class="btn go" id="report">🏅 看'+UNIT.certName+' →</button><button class="btn ghost" id="map">回'+UNIT.home+'</button>'
+              :'<button class="btn main" id="map">回'+UNIT.home+' →</button>')
+    + '</div>';
+  document.getElementById('again').onclick=function(){ startLevel(G.li); };
+  document.getElementById('map').onclick=renderMap;
+  var rp=document.getElementById('report'); if(rp) rp.onclick=renderReport;
+}
+
+/* ===================== 工程師證書（總結算） ===================== */
+var REPORT_SYNCED=false;
+function renderReport(){
+  clearTimer(); boardOff(); paintPet(); paintScore(); pushScore();
+  if(!REPORT_SYNCED){
+    REPORT_SYNCED=true;
+    refreshClass(function(){ if(document.querySelector('.rank')) renderReport(); });
+  }
+  var secs=0,gained=0,ft=0,tot=0,done=0,perfSum=0;
+  var rows=LEVELS.map(function(lv){
+    var r=S.records[lv.id];
+    if(!r) return '<tr><td class="nm">'+lv.id+' '+lv.name+'</td><td class="miss">—</td>'
+      +'<td class="miss">—</td><td class="miss">—</td><td class="miss">未挑戰</td></tr>';
+    done++; secs+=r.sec; gained+=r.gained; ft+=r.firstTry; tot+=r.total; perfSum+=r.perf;
+    return '<tr><td class="nm">'+lv.id+' '+lv.name+'</td><td>'+fmt(r.sec)
+      +(r.timeUp?' ⏰':'')+(r.stopped?' ⏹':'')+'</td>'
+      +'<td>'+r.firstTry+'/'+r.total+'</td><td>'+r.gained+'</td>'
+      +'<td class="pts">'+pctText(r.perf)+'</td></tr>';
+  }).join('');
+  var perfAll=perfSum/LEVELS.length, C=curvePoints(perfAll);
+  var me=mySummary(), R=myRankNow(me);
+  var finalPts=R.pts||C.pts;
+  var rank=UNIT.ranks[Math.max(0,Math.min(2,finalPts-1))];
+  sClear(); confetti(); setTimeout(confetti,600);
+
+  app.innerHTML =
+    '<div class="rhead"><div class="emoji">'+pet().f+'🏅</div>'
+    + '<h2>'+esc(S.name||UNIT.roleAnon)+' 的'+UNIT.certName+'</h2>'
+    + '<p style="color:#7b8b95;font-size:14.5px">'+UNIT.sub+'　·　四關全紀錄（每關取最好一次）</p></div>'
+    + '<div class="tablewrap"><table class="sheet"><thead><tr>'
+    + '<th>'+UNIT.levelWord+'</th><th>⏱ 用時</th><th>一次做對</th><th>⭐ 得分</th><th>🎁 表現</th></tr></thead>'
+    + '<tbody>'+rows+'</tbody></table></div>'
+    + '<div class="grand">'
+    + '<div class="stat"><b>'+fmt(secs)+'</b><span>⏱ 總用時</span></div>'
+    + '<div class="stat"><b>'+ft+'/'+tot+'</b><span>一次做對</span></div>'
+    + '<div class="stat"><b>'+gained+'</b><span>⭐ 總得分</span></div>'
+    + '<div class="stat pt"><b>'+pctText(perfAll)+'</b><span>🎁 平均表現</span></div></div>'
+    + '<div class="rank"><div class="big">🎁 '+finalPts+' 點</div><div class="ttl">'+rank+'</div>'
+    + '<div class="sub">'
+    + (R.pts
+        ? '班上排名 <b>第 '+R.rank+' 名 / 共 '+R.n+' 人</b>（依總得分 '+me.gained+' 分、總用時 '+fmt(me.secs)+'）。<br>'
+          + '前 1/3 給 3 點、中間 1/3 給 2 點、後 1/3 給 1 點。'
+        : '班上人數不足 '+MIN_CLASS+' 人，改用絕對標準：四關平均表現 '+pctText(perfAll)
+          + ' → 3 × '+perfAll.toFixed(2)+'<sup>'+CURVE_EXP+'</sup> ＝ '+C.raw.toFixed(2)+' → <b>'+C.pts+' 點</b>。')
+    + '</div></div>'
+    + '<div class="bonus">🏁 '+UNIT.nextTeaser+'</div>'
+    + '<div class="actions" style="margin-top:20px">'
+    + '<button class="btn go" id="board">🏆 看排行榜 →</button>'
+    + '<button class="btn main" id="map">回'+UNIT.home+'</button></div>';
+  document.getElementById('board').onclick=renderBoard;
+  document.getElementById('map').onclick=renderMap;
+}
+
+
+/* ===================== 啟動 ===================== */
+function start(){
+  UNIT_ID = UNIT.id; UNIT_SUB = UNIT.sub;
+  UID = makeUID();
+  document.title = UNIT.title;
+  var tb = document.querySelector('.topbar');
+  if(tb){
+    tb.querySelector('h1').innerHTML = UNIT.icon+' '+UNIT.title;
+    tb.querySelector('.sub').textContent = UNIT.sub;
+  }
+  try{ var _s2=localStorage.getItem('save-'+UNIT.id); if(_s2) S=Object.assign(S,JSON.parse(_s2)); }catch(e){}
+  initBackend();
+  document.addEventListener('pointerdown',function once(){ ac(); document.removeEventListener('pointerdown',once); });
+  if(S.animal===null||!S.name) renderPick();
+  else { pushScore(function(){ refreshClass(paintRank); }); renderMap(); }
+  refreshClass(paintRank);
+  startRankPoll();
+}
+var GameEngine = { start:start };
+
+</script>
+<script>
+/* ============================================================
+   單元包：2B 遺跡探險隊（綜合 2-3 加減應用、2-4 加減估算、3-1 二位數乘以一位數）
+   題目來源：南一 8 格活動單 2-3（8 題）、2-4（8 題）、3-1（24 題）教用版
+   ------------------------------------------------------------
+   L1 天平機關門   2-3  決定誰是「全部」，天平才會平衡
+   L2 迷霧射靶     2-4  先把數字吸到最近的整千，霧散開才能射靶
+   L3 切礦石       3-1  切在十位和個位的交界，分兩塊開採再合起來
+   L4 密碼石碑     綜合 把不可能是答案的石頭敲掉，留下密碼
+   ============================================================ */
+var UNIT = {
+  id:        '2B',
+  sub:       '2-3 加減應用 ＋ 2-4 加減估算 ＋ 3-1 二位數乘以一位數',
+  title:     '遺跡探險隊',
+  icon:      '🧭',
+  emoji:     '🧭🗿',
+  role:      '探險隊員',
+  roleAnon:  '無名隊員',
+  home:      '營地',
+  levelWord: '遺跡',
+  goWord:    '一起出發探險！',
+  certName:  '探險成就證書',
+  codePrefix:'MN2B-',
+  pickEmoji: '🎒',
+  pickTitle: '寫下名字，選一位探險夥伴！',
+  pickSub:   '要闖過四座遺跡：天平機關門、迷霧靶場、礦石坑、密碼石碑。名字會出現在班級排行榜上。',
+  intro:     '四座遺跡要<b>照順序</b>闖：天平機關門 → 迷霧靶場 → 礦石坑 → 密碼石碑，<br>'
+             + '完成前一關才會解鎖下一關。四關的<b>時間＋得分</b>最後換算成 <b>1～3 點</b>。',
+  goal:      '看懂加減應用題（<b>誰是全部、誰是部分</b>），用<b>整千估算</b>，'
+             + '以及二位數乘以一位數（<b>切成十位和個位分開乘，再合起來</b>）。',
+  bonus:     '找一張發票或收據，估估看上面的金額大約是幾百元，拍照給老師。',
+  ranks:     ['🥾 見習隊員', '🧭 資深嚮導', '🏆 傳奇探險家'],
+  praiseText:'這一關的觀念很穩！',
+  slipText:  '沒有踩到常見的迷思陷阱，錯的是操作上的小失誤。',
+  nextTeaser:'<b>你已經會判斷加減、會估算，也會算二位數乘以一位數了。</b>接下來 3-2 要學：三位數乘以一位數。'
+};
+
+var MIS = {
+  KEYWORD_TRAP: "別被關鍵字騙了！看到「剩下」「少」不一定要減，看到「再」「就有」不一定要加。"
+              + "先想想：<b>哪一個量最多、是全部</b>？",
+  WHOLE_PART:   "全部 ＝ 部分 ＋ 部分。把<b>最多的那個量</b>放在左盤。",
+  ROUND_WRONG:  "看這個數在線上比較靠近哪一邊。例如 3905 離 4000 只差 95，離 3000 差了 905，所以取 4000。",
+  EST_CALC:     "用取好的整千來算：例如 4000 ＋ 2000 ＝ 6000，再找最接近的靶。",
+  CUT_PLACE:    "要切在<b>十位和個位的交界</b>，左邊是整十、右邊是個位。例如 42 ＝ 40 ＋ 2，左邊 40 格、右邊 2 格；30 ＝ 30 ＋ 0，右邊就是 0 格。",
+  TEN_LOST:     "十位那塊要算「幾個十」。例如 40 × 2：4 個十 × 2 ＝ 8 個十 ＝ 80（不是 8，也不是 800）。",
+  ONES_MUL:     "個位那塊要用<b>乘法</b>：每排有幾格 × 有幾排。",
+  ADD_WRONG:    "兩塊合起來要用加法：個位加個位、十位加十位，滿 10 要進位。再算一次。",
+  CONCAT:       "不能把兩塊的答案直接接在一起寫，要<b>加起來</b>：例如 60 ＋ 10 ＝ 70，不是 610。",
+  KNOCK_RIGHT:  "這一顆是正確答案，不能敲掉！再算一次，想想哪些數字不可能。"
+};
+
+var LEVELS = [
+  /* ---------------- L1 天平機關門（2-3） ---------------- */
+  { id:"L1", tier:"加減應用", name:"天平機關門", mode:"scale", countdown:false, target:360,
+    desc:"把題目裡的數量當成砝碼放上天平：左盤放「全部」、右盤放兩個「部分」，放對了機關門才會打開。",
+    hint:"左盤放<b>全部</b>（最多的那個量），右盤放兩個<b>部分</b>。「？」放在左盤就用加法，放在右盤就用減法。",
+    items:[
+      { text:"一條馬路長 5000 公尺，工人已經修築了一段，還剩下 2578 公尺沒有修築。工人已經修築了幾公尺？",
+        unit:"公尺", whole:"a", ans:2422, trap:false,
+        w:[{id:"a",label:"馬路長",v:5000},{id:"b",label:"還沒修築",v:2578},{id:"x",label:"已經修築",v:null}] },
+      { text:"小明有一些錢，買拼圖花了 622 元，還剩下 2378 元。小明原本有幾元？",
+        unit:"元", whole:"x", ans:3000, trap:true,
+        w:[{id:"a",label:"買拼圖花了",v:622},{id:"b",label:"還剩下",v:2378},{id:"x",label:"原本有",v:null}] },
+      { text:"一箱櫻桃賣 1290 元，一箱蘋果比一箱櫻桃便宜 490 元。一箱蘋果賣幾元？",
+        unit:"元", whole:"a", ans:800, trap:false,
+        w:[{id:"a",label:"一箱櫻桃",v:1290},{id:"b",label:"便宜了",v:490},{id:"x",label:"一箱蘋果",v:null}] },
+      { text:"艾瑪今年存了 4178 元，比去年少存了 925 元。艾瑪去年存了幾元？",
+        unit:"元", whole:"x", ans:5103, trap:true,
+        w:[{id:"a",label:"今年存了",v:4178},{id:"b",label:"少存了",v:925},{id:"x",label:"去年存了",v:null}] },
+      { text:"工廠昨天生產了一些蘋果汁，今天又生產了 2750 瓶，兩天加起來共有 8200 瓶。工廠昨天生產了幾瓶？",
+        unit:"瓶", whole:"b", ans:5450, trap:true,
+        w:[{id:"a",label:"今天生產",v:2750},{id:"b",label:"兩天共有",v:8200},{id:"x",label:"昨天生產",v:null}] },
+      { text:"小松有一些錢，買衣服花了 399 元，還剩下 1699 元。小松原本有幾元？",
+        unit:"元", whole:"x", ans:2098, trap:true,
+        w:[{id:"a",label:"買衣服花了",v:399},{id:"b",label:"還剩下",v:1699},{id:"x",label:"原本有",v:null}] },
+      { text:"大賣場原本有一些彈珠汽水，再買進 1850 瓶後，共有 6100 瓶。大賣場原本有幾瓶？",
+        unit:"瓶", whole:"b", ans:4250, trap:true,
+        w:[{id:"a",label:"再買進",v:1850},{id:"b",label:"買進後共有",v:6100},{id:"x",label:"原本有",v:null}] },
+      { text:"小米有一些錢，買文具花了 321 元，還剩下 3679 元。小米原本有幾元？",
+        unit:"元", whole:"x", ans:4000, trap:true,
+        w:[{id:"a",label:"買文具花了",v:321},{id:"b",label:"還剩下",v:3679},{id:"x",label:"原本有",v:null}] }
+    ]},
+
+  /* ---------------- L2 迷霧射靶（2-4） ---------------- */
+  { id:"L2", tier:"加減估算", name:"迷霧靶場", mode:"fog", countdown:false, target:420,
+    desc:"靶場被霧遮住了。先把兩個數各自吸到最近的整千，霧散開之後，再射向最接近答案的靶。",
+    hint:"看數字在線上<b>比較靠近哪一邊的整千</b>，按那一邊的磁鐵把它吸過去。兩個數都吸好了才能射靶。",
+    items:[
+      { text:"3905 ＋ 2085 的答案，最接近哪一個數？",       a:3905, b:2085, op:"＋", opts:[4000,5000,6000], ans:6000 },
+      { text:"6990 ＋ 1008 的答案，最接近哪一個數？",       a:6990, b:1008, op:"＋", opts:[7000,5000,8000], ans:8000 },
+      { text:"一輛腳踏車賣 2980 元，爸爸買了 2 輛，大約花了幾千元？", a:2980, b:2, op:"×", opts:[5000,6000,7000], ans:6000 },
+      { text:"媽媽買了一臺 1968 元的電風扇和一臺 1088 元的果汁機，大約花了幾千元？",
+        a:1968, b:1088, op:"＋", opts:[3000,4000,5000], ans:3000 },
+      { text:"3106 － 1995 的答案，最接近哪一個數？",       a:3106, b:1995, op:"－", opts:[2000,3000,1000], ans:1000 },
+      { text:"5099 － 2975 的答案，最接近哪一個數？",       a:5099, b:2975, op:"－", opts:[8000,2000,3000], ans:2000 },
+      { text:"4010 － 1998 的答案，最接近哪一個數？",       a:4010, b:1998, op:"－", opts:[4000,3000,2000], ans:2000 },
+      { text:"6932 － 2015 的答案，最接近哪一個數？",       a:6932, b:2015, op:"－", opts:[6000,5000,4000], ans:5000 }
+    ]},
+
+  /* ---------------- L3 切礦石（3-1） ---------------- */
+  { id:"L3", tier:"乘法", name:"礦石坑", mode:"cut", countdown:false, target:540,
+    desc:"一塊礦石有好幾排、每排好幾格。切在十位和個位的交界，分成兩塊各自開採，最後合起來。",
+    hint:"先切在<b>十位和個位的交界</b>（42 ＝ 40 ＋ 2）。左邊那塊算「幾個十」，右邊那塊算個位，最後兩塊加起來。",
+    items:[
+      { text:"礦石有 3 排，每排 20 格。共有幾格？（20 × 3）", a:20, b:3 },
+      { text:"礦石有 6 排，每排 30 格。共有幾格？（30 × 6）", a:30, b:6 },
+      { text:"礦石有 2 排，每排 42 格。共有幾格？（42 × 2）", a:42, b:2 },
+      { text:"礦石有 3 排，每排 31 格。共有幾格？（31 × 3）", a:31, b:3 },
+      { text:"礦石有 2 排，每排 35 格。共有幾格？（35 × 2）", a:35, b:2 },
+      { text:"礦石有 5 排，每排 19 格。共有幾格？（19 × 5）", a:19, b:5 },
+      { text:"礦石有 3 排，每排 28 格。共有幾格？（28 × 3）", a:28, b:3 },
+      { text:"礦石有 8 排，每排 51 格。共有幾格？（51 × 8）", a:51, b:8 }
+    ]},
+
+  /* ---------------- L4 密碼石碑（綜合） ----------------
+     1、2、3、4 題是課本 3-1 的應用題；5～8 題依同樣情境改編，綜合加減判斷與估算 */
+  { id:"L4", tier:"綜合", name:"密碼石碑", mode:"knock", countdown:false, target:420,
+    desc:"石碑前有四顆石頭，只有一顆是密碼。把不可能是答案的石頭一顆一顆敲掉，留下最後一顆。",
+    hint:"一顆一顆檢查：這個數<b>有沒有可能</b>是答案？不可能就敲掉。把正確答案敲掉會扣分。",
+    items:[
+      { text:"牛肉麵 1 碗賣 65 元。買 2 碗，共要付幾元？", ans:130, sol:"65 × 2 ＝ 130",
+        stones:[ {v:130, why:""},
+                 {v:67,   why:"67 是 65 ＋ 2；買 2 碗是「2 個 65」，要用乘法"},
+                 {v:1210, why:"1210 是把 60×2＝120 和 5×2＝10 直接接在一起寫，應該要相加"},
+                 {v:120,  why:"120 只算了 60 × 2，漏掉了 5 × 2 ＝ 10"} ] },
+      { text:"小美每天存 45 元。存了一星期（7 天），共存了幾元？", ans:315, sol:"45 × 7 ＝ 315",
+        stones:[ {v:315, why:""},
+                 {v:225, why:"225 是 45 × 5；一星期有 7 天，不是 5 天"},
+                 {v:52,  why:"52 是 45 ＋ 7；每天都存 45 元，要用乘法"},
+                 {v:215, why:"215 是 280 ＋ 35 時，十位 8 ＋ 3 ＝ 11 忘了進位到百位"} ] },
+      { text:"三年級有 9 個班，每班有 27 個人。三年級共有幾個人？", ans:243, sol:"27 × 9 ＝ 243",
+        stones:[ {v:243,  why:""},
+                 {v:36,   why:"36 是 27 ＋ 9；9 個班、每班 27 人，要用乘法"},
+                 {v:1863, why:"1863 是把 20×9＝180 和 7×9＝63 直接接在一起寫，應該 180 ＋ 63"},
+                 {v:143,  why:"143 是 180 ＋ 63 時，十位 8 ＋ 6 ＝ 14 忘了進位到百位"} ] },
+      { text:"陽春麵 1 碗賣 45 元。買 4 碗，共要付幾元？", ans:180, sol:"45 × 4 ＝ 180",
+        stones:[ {v:180,  why:""},
+                 {v:49,   why:"49 是 45 ＋ 4；買 4 碗要用乘法"},
+                 {v:1620, why:"1620 是把 40×4＝160 和 5×4＝20 直接接在一起寫，應該 160 ＋ 20"},
+                 {v:160,  why:"160 只算了 40 × 4，漏掉了 5 × 4 ＝ 20"} ] },
+      { text:"買 4 碗陽春麵共要 180 元，付了 200 元。要找回幾元？", ans:20, sol:"200 － 180 ＝ 20",
+        stones:[ {v:20,  why:""},
+                 {v:380, why:"380 是 200 ＋ 180；付的錢比麵錢多，找回的錢要用減法"},
+                 {v:180, why:"180 是麵的價錢，不是找回的錢"},
+                 {v:200, why:"200 是付出去的錢，不是找回的錢"} ] },
+      { text:"要買 2 碗牛肉麵（130 元）和 4 碗陽春麵（180 元）。大約要準備幾百元？",
+        ans:300, sol:"130 大約是 100、180 大約是 200，100 ＋ 200 ＝ 300",
+        stones:[ {v:300,  why:""},
+                 {v:200,  why:"200 是把 180 取成 100 了；180 比較靠近 200"},
+                 {v:400,  why:"400 是把 130 取成 200 了；130 比較靠近 100"},
+                 {v:3000, why:"3000 是「幾千」，題目問的是大約幾百元"} ] },
+      { text:"小美存一星期共存了 315 元，買文具之後還剩下 128 元。文具花了幾元？",
+        ans:187, sol:"315 － 128 ＝ 187",
+        stones:[ {v:187, why:""},
+                 {v:443, why:"443 是 315 ＋ 128；原本的 315 元是全部，花掉的要用減法求"},
+                 {v:213, why:"213 是每一位都把大的減小的；5 － 8 不夠減，要向十位借"},
+                 {v:197, why:"197 是借位之後忘了把十位減 1"} ] },
+      { text:"三年級 243 人去校外教學，還有 58 位老師和家長一起去。大約共有幾百人？",
+        ans:300, sol:"243 大約是 200、58 大約是 100，200 ＋ 100 ＝ 300",
+        stones:[ {v:300,  why:""},
+                 {v:200,  why:"200 只算了三年級的人，還要加上老師和家長"},
+                 {v:400,  why:"400 是把 243 取成 300 了；243 比較靠近 200"},
+                 {v:3000, why:"3000 是「幾千」，題目問的是大約幾百人"} ] }
+    ]}
+];
+
+/* ============================================================
+   共用小工具
+   ============================================================ */
+/* 固定種子的洗牌：同一題每次打開順序都一樣，測試與老師檢查才對得上 */
+function rngFrom(seed){
+  var s = (seed*9301 + 49297) % 233280;
+  return function(){ s = (s*9301 + 49297) % 233280; return s/233280; };
+}
+function shuffleSeeded(arr, seed){
+  var a = arr.slice(), r = rngFrom(seed+7);
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function qSeed(){ return (G.li+1)*100 + G.qi; }
+
+/* ============================================================
+   L1 天平機關門
+   ============================================================ */
+function scaleMap(it){ var W={}; it.w.forEach(function(x){ W[x.id]=x; }); return W; }
+function scaleFormula(it){
+  var W=scaleMap(it);
+  var known=it.w.filter(function(x){ return x.v!==null; });
+  if(it.whole==='x') return known[0].v+' ＋ '+known[1].v;
+  var other=known.filter(function(x){ return x.id!==it.whole; })[0];
+  return W[it.whole].v+' － '+other.v;
+}
+function stageScale(it){
+  G.st = { place:{}, sel:null, open:false,
+           order: shuffleSeeded(it.w.map(function(x){ return x.id; }), qSeed()) };
+  it.w.forEach(function(x){ G.st.place[x.id]=null; });
+  return '<div class="story">📜 '+esc(it.text)+'</div><div id="zone"></div>';
+}
+function paintScale(){
+  var it=G.lv.items[G.qi], st=G.st, W=scaleMap(it);
+  var onL=st.order.filter(function(id){ return st.place[id]==='L'; });
+  var onR=st.order.filter(function(id){ return st.place[id]==='R'; });
+  var tray=st.order.filter(function(id){ return st.place[id]===null; });
+  var chip=function(id){
+    var x=W[id];
+    return '<button class="weight'+(x.v===null?' unknown':'')+(st.sel===id?' sel':'')+'" data-id="'+id+'">'
+      + '<span class="wl">'+esc(x.label)+'</span>'
+      + '<b>'+(x.v===null?'？':x.v)+'</b> <span class="wu">'+esc(it.unit)+'</span></button>';
+  };
+  var slots=function(ids,cap){
+    var h=ids.map(chip).join('');
+    for(var i=ids.length;i<cap;i++) h+='<div class="wslot">空位</div>';
+    return h;
+  };
+  var tilt = st.open ? 'level open' : 'wobble';
+  document.getElementById('zone').innerHTML =
+      '<div class="gate'+(st.open?' open':'')+'">🚪</div>'
+    + '<div class="scale '+tilt+'" id="scaleBox"><div class="beam"></div>'
+    + '<div class="pans">'
+    + '<div class="pan" data-pan="L"><div class="panlab">左盤：<b>全部</b><small>最多的那個量（放 1 個）</small></div>'
+    +   slots(onL,1)+'</div>'
+    + '<div class="pan" data-pan="R"><div class="panlab">右盤：<b>部分 ＋ 部分</b><small>放 2 個</small></div>'
+    +   slots(onR,2)+'</div>'
+    + '</div></div>'
+    + (st.open ? '' :
+        '<div class="traylab">'+(tray.length
+          ? '👇 先點一個砝碼，再點要放的盤子。放錯了，點盤子上的砝碼就能拿回來。'
+          : '三個砝碼都放好了，按「確定！」看看機關門會不會打開。')+'</div>'
+      + '<div class="wtray">'+tray.map(chip).join('')+'</div>');
+  if(st.open) return;
+  Array.prototype.forEach.call(document.querySelectorAll('#zone .weight'),function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      if(G.frozen) return;
+      var id=b.dataset.id;
+      if(st.place[id]!==null){ st.place[id]=null; st.sel=null; sTap(); paintScale(); return; }
+      st.sel = (st.sel===id) ? null : id;
+      sPick(); paintScale();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#zone .pan'),function(p){
+    p.onclick=function(){
+      if(G.frozen) return;
+      if(!st.sel){ showFb('no','先點一個砝碼，再點要放的盤子。'); return; }
+      var pan=p.dataset.pan, cap=(pan==='L')?1:2;
+      var cnt=st.order.filter(function(id){ return st.place[id]===pan; }).length;
+      if(cnt>=cap){
+        showFb('no', pan==='L' ? '左盤只能放一個「全部」。要換的話，先點左盤上的砝碼拿回來。'
+                               : '右盤已經放滿兩個了。要換的話，先點右盤上的砝碼拿回來。');
+        sWrong(); return;
+      }
+      st.place[st.sel]=pan; st.sel=null; sDrop(); paintScale();
+    };
+  });
+}
+
+/* ============================================================
+   L2 迷霧射靶
+   ============================================================ */
+function kRound(v){ return Math.round(v/1000)*1000; }
+function fogExact(it){ return it.op==='＋' ? it.a+it.b : (it.op==='－' ? it.a-it.b : it.a*it.b); }
+function stageFog(it){
+  G.st = { step:0, ra:null, rb:null, act:null, hit:false };
+  return '<div class="story">🎯 '+esc(it.text)+'</div><div id="zone"></div>';
+}
+function fogLine(v, rounded, which, active){
+  var lo=Math.floor(v/1000)*1000, hi=lo+1000, pct=(v-lo)/10;
+  return '<div class="nline'+(active?' active':'')+(rounded!==null?' done':'')+'">'
+    + '<div class="nlab">'+(rounded!==null ? v+' 🧲 → <b>'+rounded+'</b>' : '<b>'+v+'</b> 比較靠近哪一邊？')+'</div>'
+    + '<div class="ntrack"><span class="ntick l">'+lo+'</span><span class="ntick r">'+hi+'</span>'
+    +   '<div class="nmid"></div>'
+    +   '<div class="ndot'+(rounded!==null?(rounded===lo?' snapL':' snapR'):'')+'" style="left:'+pct+'%">'+v+'</div></div>'
+    + (rounded!==null ? '' :
+        '<div class="nends">'
+      + '<button class="nend" data-which="'+which+'" data-v="'+lo+'"'+(active?'':' disabled')+'>🧲 吸到 '+lo+'</button>'
+      + '<button class="nend" data-which="'+which+'" data-v="'+hi+'"'+(active?'':' disabled')+'>吸到 '+hi+' 🧲</button>'
+      + '</div>')
+    + '</div>';
+}
+function paintFog(){
+  var it=G.lv.items[G.qi], st=G.st;
+  var html = fogLine(it.a, st.ra, 'a', st.step===0);
+  if(it.op!=='×') html += fogLine(it.b, st.rb, 'b', st.step===1);
+  var left  = st.ra===null ? '？' : st.ra;
+  var right = it.op==='×' ? it.b : (st.rb===null ? '？' : st.rb);
+  var ready = st.step===2;
+  html += '<div class="eqn">'+left+' '+it.op+' '+right+' ＝ '+(st.hit?'<b>'+it.ans+'</b>':'？')+'</div>'
+       +  '<div class="range'+(ready?' clear':'')+'">'
+       +  (ready ? '' : '<div class="fogcover">🌫️ 霧還沒散：先把數字吸到最近的整千</div>')
+       +  it.opts.map(function(v){
+            return '<button class="target'+(st.hit&&v===it.ans?' hit':'')+'" data-v="'+v+'"'+(ready&&!st.hit?'':' disabled')+'>'
+                 + '<span class="ring">🎯</span><b>'+v+'</b></button>';
+          }).join('')
+       +  '</div>';
+  document.getElementById('zone').innerHTML = html;
+  if(st.hit) return;
+  Array.prototype.forEach.call(document.querySelectorAll('#zone .nend'),function(b){
+    b.onclick=function(){
+      if(G.frozen || b.disabled) return;
+      st.act={type:'snap', which:b.dataset.which, v:+b.dataset.v};
+      sPick(); check();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#zone .target'),function(b){
+    b.onclick=function(){
+      if(G.frozen || b.disabled) return;
+      st.act={type:'shoot', v:+b.dataset.v};
+      sDrop(); check();
+    };
+  });
+}
+
+/* ============================================================
+   L3 切礦石
+   ============================================================ */
+function cutInfo(it){
+  var t=Math.floor(it.a/10)*10, o=it.a%10;
+  return { t:t, o:o, L:t*it.b, R:o*it.b, T:it.a*it.b };
+}
+function cutCands(it){
+  var c=cutInfo(it), s=[];
+  if(c.o>0) s.push(c.o);
+  for(var k=10;k<=it.a;k+=10) s.push(k);
+  return s;
+}
+/* 三個選項：正解＋針對迷思的誘答，保證不重複 */
+function pick3(correct, pool, seed){
+  var out=[correct];
+  pool.concat([correct+100, correct+1, correct*2]).forEach(function(v){
+    if(out.length<3 && v>0 && out.indexOf(v)<0) out.push(v);
+  });
+  return shuffleSeeded(out, seed);
+}
+function stageCut(it){
+  var c=cutInfo(it);
+  G.st = { step:'cut', act:null,
+    optL: pick3(c.L, [(c.t/10)*it.b, c.L*10], qSeed()+1),
+    optR: pick3(c.R, [c.o+it.b, c.R*10, c.R+10], qSeed()+2),
+    optT: pick3(c.T, [c.R>=10 ? c.T-10 : c.T+10, Number(String(c.L/10)+String(c.R)), c.T+100], qSeed()+3) };
+  return '<div class="story">⛏️ '+esc(it.text)+'</div><div id="zone"></div>';
+}
+function oreRows(n){ var h=''; for(var i=0;i<n;i++) h+='<div class="orow"></div>'; return h; }
+function paintCut(){
+  var it=G.lv.items[G.qi], st=G.st, c=cutInfo(it), html='';
+  var ticks=''; for(var k=10;k<it.a;k+=10) ticks+='<span class="otick" style="left:'+(k/it.a*100)+'%"></span>';
+
+  if(st.step==='cut'){
+    html += '<div class="orewrap"><div class="ore whole" style="--n:'+it.a+';height:'+Math.min(34*it.b,190)+'px">'
+          + oreRows(it.b)+ticks+'</div>'
+          + '<div class="orecap">每排 <b>'+it.a+'</b> 格，共 <b>'+it.b+'</b> 排（每 10 格有一條刻線）</div></div>'
+          + '<div class="askq">✂️ 要切在哪裡，才能分成「整十」和「個位」兩塊？</div><div class="optrow">'
+          + cutCands(it).map(function(v){
+              return '<button class="opt cutopt" data-act="cut" data-v="'+v+'">左邊 '+v+' 格｜右邊 '+(it.a-v)+' 格</button>';
+            }).join('')
+          + '</div>';
+  }else{
+    var h=Math.min(34*it.b,190);
+    html += '<div class="orewrap"><div class="orepieces">'
+          + '<div class="ore piece'+(st.step!=='left'?' mined':' cur')+'" style="flex:'+c.t+';--n:'+c.t+';height:'+h+'px">'
+          +   oreRows(it.b)+'<div class="plab">'+c.t+' × '+it.b+(st.step!=='left'?' ＝ '+c.L:'')+'</div></div>'
+          + '<div class="ore piece'+(c.o===0?' empty':'')+(st.step==='right'?' cur':'')+(st.step==='total'||st.step==='done'?' mined':'')+'" '
+          +   'style="flex:'+Math.max(c.o, it.a*0.14)+';--n:'+Math.max(c.o,1)+';height:'+h+'px">'
+          +   (c.o===0 ? '<div class="plab">個位是 0<br>沒有東西</div>'
+                       : oreRows(it.b)+'<div class="plab">'+c.o+' × '+it.b+(st.step==='total'||st.step==='done'?' ＝ '+c.R:'')+'</div>')
+          + '</div></div>'
+          + '<div class="orecap">'+it.a+' ＝ '+c.t+' ＋ '+c.o+'</div></div>';
+
+    var opts=null, q='';
+    if(st.step==='left'){  q='左邊這塊 '+c.t+' × '+it.b+' 有幾格？'; opts=st.optL; }
+    if(st.step==='right'){ q='右邊這塊 '+c.o+' × '+it.b+' 有幾格？'; opts=st.optR; }
+    if(st.step==='total'){ q='兩塊合起來共幾格？　'+c.L+' ＋ '+c.R+' ＝ ？'; opts=st.optT; }
+    if(opts){
+      html += '<div class="askq">⛏️ '+q+'</div><div class="optrow">'
+            + opts.map(function(v){
+                return '<button class="opt" data-act="val" data-v="'+v+'">'+v+' 格</button>';
+              }).join('')
+            + '</div>';
+    }else{
+      html += '<div class="askq done">💎 開採完成：'+it.a+' × '+it.b+' ＝ <b>'+c.T+'</b></div>';
+    }
+  }
+  document.getElementById('zone').innerHTML = html;
+  Array.prototype.forEach.call(document.querySelectorAll('#zone .opt'),function(b){
+    b.onclick=function(){
+      if(G.frozen) return;
+      st.act={type:b.dataset.act, v:+b.dataset.v};
+      sPick(); check();
+    };
+  });
+}
+
+/* ============================================================
+   L4 密碼石碑
+   ============================================================ */
+function stageKnock(it){
+  G.st = { gone:[], act:null, lastWhy:'', lastV:null, done:false,
+           order: shuffleSeeded(it.stones.map(function(s){ return s.v; }), qSeed()) };
+  return '<div class="story">🗿 '+esc(it.text)+'</div><div id="zone"></div>';
+}
+function paintKnock(){
+  var it=G.lv.items[G.qi], st=G.st;
+  var left=it.stones.length-1-st.gone.length;
+  var html = st.done
+    ? '<div class="knockhint win">🗝️ 只剩下一顆了——它就是密碼！</div>'
+    : '<div class="knockhint">把<b>不可能是答案</b>的石頭敲掉。還要再敲 <b>'+left+'</b> 顆，最後留下來的那一顆就是密碼。</div>';
+  html += '<div class="stones">' + st.order.map(function(v){
+    if(st.gone.indexOf(v)>=0) return '<div class="stone gone"><span>💥</span><s>'+v+'</s></div>';
+    if(st.done) return '<div class="stone win"><span>✨</span><b>'+v+'</b></div>';
+    return '<button class="stone" data-v="'+v+'"><span>🪨</span><b>'+v+'</b><small>敲掉</small></button>';
+  }).join('') + '</div>';
+  document.getElementById('zone').innerHTML = html;
+  if(st.done) return;
+  Array.prototype.forEach.call(document.querySelectorAll('#zone button.stone'),function(b){
+    b.onclick=function(){
+      if(G.frozen) return;
+      st.act={v:+b.dataset.v};
+      sBreak(); check();
+    };
+  });
+}
+
+/* ============================================================
+   玩法登錄表
+   ============================================================ */
+MODES = {
+
+  scale: {
+    choice: true,
+    sub: function(){ return '把三個數量當成砝碼放上天平：左盤放「全部」，右盤放兩個「部分」'; },
+    title: function(){ return '讓天平平衡，打開機關門'; },
+    stage: stageScale,
+    bind: paintScale,
+    judge: function(it){
+      var st=G.st;
+      var unplaced = it.w.some(function(x){ return st.place[x.id]===null; });
+      if(unplaced) return {halt:true, msg:'三個砝碼都要放上天平：左盤放 1 個「全部」，右盤放 2 個「部分」。'};
+      if(st.place[it.whole]==='L') return {ok:true};
+      return {ok:false, code: it.trap ? 'KEYWORD_TRAP' : 'WHOLE_PART'};
+    },
+    answer: function(it){
+      var W=scaleMap(it);
+      return '正解：「'+W[it.whole].label+'」是全部，所以 '+scaleFormula(it)+' ＝ '+it.ans+' '+it.unit;
+    },
+    onRight: function(it){
+      var W=scaleMap(it);
+      var how = it.whole==='x' ? '「？」是全部，要用<b>加法</b>' : '「'+W[it.whole].label+'」是全部，「？」是部分，要用<b>減法</b>';
+      return { msg:'<div class="ans">🚪 天平平衡，機關門打開了！'+how+'：'
+                 + scaleFormula(it)+' ＝ <b>'+it.ans+'</b> '+esc(it.unit)+'</div>',
+               after: function(){ G.st.open=true; G.st.sel=null; paintScale(); } };
+    }
+  },
+
+  fog: {
+    choice: true,
+    noCheck: true,
+    sub: function(it){
+      return it.op==='×' ? '先把 '+it.a+' 吸到最近的整千，霧散開後射向最接近的靶'
+                         : '先把兩個數各自吸到最近的整千，霧散開後射向最接近的靶';
+    },
+    title: function(){ return '估一估，射中靶心'; },
+    stage: stageFog,
+    bind: paintFog,
+    judge: function(it){
+      var st=G.st, a=st.act; st.act=null;
+      if(!a) return {halt:true, msg:'先把數字吸到最近的整千。'};
+      if(a.type==='snap'){
+        var v = (a.which==='a') ? it.a : it.b;
+        var right = kRound(v);
+        if(a.v!==right) return {ok:false, code:'ROUND_WRONG'};
+        if(a.which==='a'){ st.ra=right; st.step=(it.op==='×') ? 2 : 1; }
+        else { st.rb=right; st.step=2; }
+        paintFog();
+        return {halt:true, tone:'ok',
+                msg:'✔ '+v+' 比較靠近 <b>'+right+'</b>'
+                   +(st.step===2 ? '。霧散開了，射向最接近答案的靶！' : '，接著處理下一個數。')};
+      }
+      if(st.step!==2) return {halt:true, msg:'霧還沒散開，先把數字吸到最近的整千。'};
+      if(a.v===it.ans) return {ok:true};
+      return {ok:false, code:'EST_CALC'};
+    },
+    answer: function(it){
+      var ra=kRound(it.a), rb=(it.op==='×') ? it.b : kRound(it.b);
+      return '正解：'+it.a+' 大約是 '+ra
+        + (it.op==='×' ? '，'+ra+' × '+it.b : '、'+it.b+' 大約是 '+rb+'，'+ra+' '+it.op+' '+rb)
+        + ' ＝ '+it.ans+'，最接近 '+it.ans;
+    },
+    onRight: function(it){
+      var st=G.st;
+      return { msg:'<div class="ans">🎯 正中靶心！'+st.ra+' '+it.op+' '+(it.op==='×'?it.b:st.rb)+' ＝ <b>'+it.ans+'</b>'
+                 + '（實際答案是 '+fogExact(it)+'，真的很接近）</div>',
+               after: function(){ G.st.hit=true; paintFog(); } };
+    }
+  },
+
+  cut: {
+    choice: true,
+    noCheck: true,
+    sub: function(){ return '先切開礦石，左邊算「幾個十」，右邊算個位，最後合起來'; },
+    title: function(it){ return it.a+' × '+it.b+' ＝ ？'; },
+    stage: stageCut,
+    bind: paintCut,
+    judge: function(it){
+      var st=G.st, a=st.act, c=cutInfo(it); st.act=null;
+      if(!a) return {halt:true, msg:'先選一個地方切開礦石。'};
+      if(st.step==='cut'){
+        if(a.v!==c.t) return {ok:false, code:'CUT_PLACE'};
+        st.step='left'; paintCut();
+        return {halt:true, tone:'ok',
+                msg:'✔ 切好了：'+it.a+' ＝ '+c.t+' ＋ '+c.o
+                   +(c.o===0 ? '。個位是 0，所以右邊那塊是空的。先算左邊這塊。' : '。先算左邊這塊。')};
+      }
+      if(st.step==='left'){
+        if(a.v!==c.L) return {ok:false, code:'TEN_LOST'};
+        if(c.o===0){ st.step='done'; return {ok:true}; }
+        st.step='right'; paintCut();
+        return {halt:true, tone:'ok',
+                msg:'✔ '+c.t+' × '+it.b+' ＝ '+c.L+'（'+(c.t/10)+' 個十 × '+it.b+' ＝ '+(c.t/10*it.b)+' 個十）。再算右邊那塊。'};
+      }
+      if(st.step==='right'){
+        if(a.v!==c.R) return {ok:false, code:'ONES_MUL'};
+        st.step='total'; paintCut();
+        return {halt:true, tone:'ok', msg:'✔ '+c.o+' × '+it.b+' ＝ '+c.R+'。最後把兩塊合起來。'};
+      }
+      if(st.step==='total'){
+        if(a.v===c.T){ st.step='done'; return {ok:true}; }
+        var concat=Number(String(c.L/10)+String(c.R));
+        return {ok:false, code:(a.v===concat ? 'CONCAT' : 'ADD_WRONG')};
+      }
+      return {halt:true, msg:'這一題已經完成了。'};
+    },
+    answer: function(it){
+      var c=cutInfo(it);
+      return '正解：'+it.a+' ＝ '+c.t+' ＋ '+c.o+'，'+c.t+' × '+it.b+' ＝ '+c.L
+        + (c.o ? '，'+c.o+' × '+it.b+' ＝ '+c.R+'，合起來 '+c.L+' ＋ '+c.R+' ＝ '+c.T : '')
+        + '，所以 '+it.a+' × '+it.b+' ＝ '+c.T;
+    },
+    onRight: function(it){
+      var c=cutInfo(it);
+      return { msg:'<div class="ans">💎 開採完成！'
+                 + (c.o ? c.L+' ＋ '+c.R+' ＝ ' : c.t/10+' 個十 × '+it.b+' ＝ '+(c.t/10*it.b)+' 個十 ＝ ')
+                 + '<b>'+c.T+'</b>，所以 '+it.a+' × '+it.b+' ＝ '+c.T+'</div>',
+               after: paintCut };
+    }
+  },
+
+  knock: {
+    choice: true,
+    noCheck: true,
+    sub: function(){ return '把不可能是答案的石頭敲掉，留下最後一顆'; },
+    title: function(){ return '找出密碼石'; },
+    stage: stageKnock,
+    bind: paintKnock,
+    judge: function(it){
+      var st=G.st, a=st.act; st.act=null;
+      if(!a) return {halt:true, msg:'點一顆你覺得不可能是答案的石頭。'};
+      if(a.v===it.ans) return {ok:false, code:'KNOCK_RIGHT'};
+      var s=it.stones.filter(function(x){ return x.v===a.v; })[0];
+      if(!s || st.gone.indexOf(a.v)>=0) return {halt:true, msg:'這顆已經敲掉了。'};
+      st.gone.push(a.v); st.lastWhy=s.why; st.lastV=a.v;
+      if(st.gone.length >= it.stones.length-1){ st.done=true; return {ok:true}; }
+      paintKnock();
+      return {halt:true, tone:'ok', msg:'✔ 敲掉 '+a.v+'：'+s.why+'。'};
+    },
+    answer: function(it){ return '正解：密碼是 '+it.ans+'（'+it.sol+'）'; },
+    onRight: function(it){
+      var st=G.st;
+      return { msg:'<div class="ans">✔ 敲掉 '+st.lastV+'：'+st.lastWhy+'。</div>'
+                 + '<div class="ans">🗝️ 密碼石亮了：<b>'+it.ans+'</b>（'+it.sol+'）</div>',
+               after: paintKnock };
+    }
+  }
+};
+
+</script>
+<script>GameEngine.start();</script>
+</body>
+</html>
